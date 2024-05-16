@@ -48,9 +48,12 @@ contract SubscriptionManager{
      event PlanUnsubscribed(uint256 planId,address indexed subscriber);
      event SubscriptionCharged(uint256 planId,address indexed subscriber);
 
-     constructor(){
-
+     constructor(uint8 chainId, address _sessionKeyPluginAddr ){
+          sessionKeyPluginAddr=_sessionKeyPluginAddr;
+          currentChainId=chainId;
+          sessionKeyPlugin=ISessionKeyPlugin(_sessionKeyPluginAddr);
      }
+
      modifier planExists(uint256 planId) {
           require(planId <= numSubscriptionPlans);
           _;
@@ -94,14 +97,12 @@ contract SubscriptionManager{
 
           assert(isPluginInstalled(sessionKeyPluginAddr, msg.sender));
           SubscriptionPlan memory plan=subscriptionPlans[planId];
-          uint256 totalTokenAllowance=0;
           bool isSessionAllowed=sessionKeyPlugin.isSessionKeyOf(msg.sender,address(this));
           if(!isSessionAllowed){
                revert("User has not given sesssion permission to contract");
           }
-          totalTokenAllowance= (sessionKeyPlugin.getERC20SpendLimitInfo(msg.sender, address(this), plan.tokenAddress)).limit;
+          uint256 totalTokenAllowance= (sessionKeyPlugin.getERC20SpendLimitInfo(msg.sender, address(this), plan.tokenAddress)).limit;
           uint256 tokenSpendLimitValue=tokenSpendLimitValues[msg.sender][plan.tokenAddress].limitValue;
-          totalTokenAllowance+=plan.price;
           assert(tokenSpendLimitValue+plan.price<=totalTokenAllowance);
           tokenSpendLimitValues[msg.sender][plan.tokenAddress].limitValue=tokenSpendLimitValue+plan.price;
           // if(){
