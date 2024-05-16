@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.12;
+
 struct Call {
     // The target address for the account to call.
     address target;

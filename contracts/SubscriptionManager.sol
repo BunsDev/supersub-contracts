@@ -41,8 +41,8 @@ contract SubscriptionManager{
      mapping(address=> mapping(uint256=>UserSubscription)) subscriptionStatuses;
      mapping(address=>mapping(address=>SpendLimitInfo)) tokenSpendLimitValues;
 
-     event PlanCreated(uint256 planId,uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress);
-     event PlanChanged(uint256 planId,uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress);
+     event PlanCreated(uint256 planId,uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress,uint8 receiveChainId);
+     event PlanChanged(uint256 planId,uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress,uint8 receiveChainId);
      event PlanDeleted(uint256 planId);
      event PlanSubscribed(uint256 planId,address indexed subscriber);
      event PlanUnsubscribed(uint256 planId,address indexed subscriber);
@@ -64,12 +64,16 @@ contract SubscriptionManager{
      function createSubscriptionPlan(uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress,uint8 receiveChainId)public{
           SubscriptionPlan memory plan=SubscriptionPlan({planId:numSubscriptionPlans,price:price,chargeInterval:chargeInterval,tokenAddress:tokenAddress,provider:provider,receivingAddress:receivingAddress,deleted:false,receiveChainId:receiveChainId});
           subscriptionPlans[numSubscriptionPlans]=plan;
-          emit PlanCreated(numSubscriptionPlans, price, chargeInterval, tokenAddress, provider, receivingAddress);
+          emit PlanCreated(numSubscriptionPlans, price, chargeInterval, tokenAddress, provider, receivingAddress,receiveChainId);
           numSubscriptionPlans++;
      }
 
-     function changeSubscriptionPlanPaymentInfo(uint256 planId, uint256 price, address tokenAddress)planExists(planId) isPlanProvider(planId, msg.sender) public {
-          //To-Do(Might not be possible)
+     function changeSubscriptionPlanPaymentInfo(uint256 planId, address receivingAddress,uint8 receiveChainId)planExists(planId) isPlanProvider(planId, msg.sender) public {
+           SubscriptionPlan memory plan=subscriptionPlans[planId];
+           plan.receivingAddress=receivingAddress;
+           plan.receiveChainId=receiveChainId;
+           subscriptionPlans[planId]=plan;
+          emit PlanChanged(planId, plan.price, plan.chargeInterval, plan.tokenAddress, plan.provider, receivingAddress, receiveChainId);
 
      }
 
@@ -88,6 +92,7 @@ contract SubscriptionManager{
                revert("User already subscribed to plan");
           }
 
+          assert(isPluginInstalled(sessionKeyPluginAddr, msg.sender));
           SubscriptionPlan memory plan=subscriptionPlans[planId];
           uint256 totalTokenAllowance=0;
           bool isSessionAllowed=sessionKeyPlugin.isSessionKeyOf(msg.sender,address(this));
@@ -99,7 +104,7 @@ contract SubscriptionManager{
           totalTokenAllowance+=plan.price;
           assert(tokenSpendLimitValue+plan.price<=totalTokenAllowance);
           tokenSpendLimitValues[msg.sender][plan.tokenAddress].limitValue=tokenSpendLimitValue+plan.price;
-          // if(isPluginInstalled(sessionKeyPluginAddr, msg.sender)){
+          // if(){
           //      //use update gotten from spendLimit of managercontract Info to update the session key
 
           //      sessionKeyPlugin.updateKeyPermissions(sessionKey, updates);
@@ -177,7 +182,7 @@ contract SubscriptionManager{
           if(plan.receiveChainId==currentChainId){
                IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
           }else{
-               //use CCIP instead
+               //use CCIP for token transfer instead
           }
 
           emit SubscriptionCharged(planId, subscriber);
