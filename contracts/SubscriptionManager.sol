@@ -9,7 +9,7 @@ import {IERC20} from "./interfaces/IERC20.sol";
 
 
 
-contract SubscriptionManager{
+contract SubscriptionManager {
      uint256 numSubscriptionPlans;
      address public immutable sessionKeyPluginAddr;
      ISessionKeyPlugin public immutable sessionKeyPlugin;
@@ -24,8 +24,25 @@ contract SubscriptionManager{
           uint8 receiveChainId;
           bool deleted;
      }
-
-     struct UserSubscription{
+     struct Product {
+          bytes32 productId;
+          address provider;
+          address chargeToken;
+          address receivingAddress;
+          uint8 destinationChain;
+          uint8 planNonce;
+          bool isActive;
+          string name;
+     }
+     struct Plan {
+          bytes32 productId;
+          bytes32 planId;
+          address provider;
+          uint256 price;
+          uint32 chargeInterval;
+          bool isActive;
+     }
+     struct UserSubscription {
         uint256 lastChargeDate;
         uint256 startTime;
         uint256 endTime;
@@ -44,6 +61,45 @@ contract SubscriptionManager{
      event PlanCreated(uint256 planId,uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress,uint8 receiveChainId);
      event PlanChanged(uint256 planId,uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress,uint8 receiveChainId);
      event PlanDeleted(uint256 planId);
+     ISessionKeyPlugin public immutable sessionKeyPluginAddr;
+     uint8 currentChainId;
+     mapping(address => uint256) productNonces;
+     mapping(address => mapping(bytes32 => Product)) providerProducts;
+     mapping(address => mapping(bytes32 => Plan)) providerPlans;
+     mapping(address => mapping(bytes32 => UserSubscription)) userSubscriptions;
+
+     event ProductCreated (
+          bytes32 indexed productId, 
+          address indexed provider, 
+          string name, 
+          address chargeToken,
+          uint8 destinationChain,
+          bool isActive
+     );
+     event ProductUpdated (
+          bytes32 indexed productId, 
+          address indexed provider, 
+          string name, 
+          address chargeToken,
+          uint8 destinationChain,
+          bool isActive
+     )
+     event PlanCreated (
+          bytes32 indexed productId,
+          bytes32 indexed planId,
+          address indexed provider,
+          uint256 price,
+          uint256 chargeInterval,
+          bool isActive
+     );
+     event PlanUpdated (
+          bytes32 indexed productId,
+          bytes32 indexed planId,
+          address indexed provider,
+          uint256 price,
+          uint256 chargeInterval,
+          bool isActive
+     );
      event PlanSubscribed(uint256 planId,address indexed subscriber);
      event PlanUnsubscribed(uint256 planId,address indexed subscriber);
      event SubscriptionCharged(uint256 planId,address indexed subscriber);
@@ -56,12 +112,69 @@ contract SubscriptionManager{
 
      modifier planExists(uint256 planId) {
           require(planId <= numSubscriptionPlans);
+     modifier productExists(bytes32 productId) {
+          require(providerProducts[msg.sender][productId]);
+          _;
+     }
+     modifier planExists(bytes32 planId) {
+          require(providerPlans[msg.sender][planId]);
           _;
      }
      
-     modifier isPlanProvider(uint256 planId,address caller) {
-          subscriptionPlans[planId].provider==caller;
-          _;
+     function createProduct(
+          string memory _name, 
+          address _chargeToken, 
+          address _receivingAddress, 
+          uint8 _destinationChain
+     ) public {
+          Product memory product = Product({
+               name: _name,
+               productId: bytes32(productNonces[msg.sender]),
+               provider: msg.sender,
+               chargeToken: _chargeToken,
+               receivingAddress: _receivingAddress,
+               destinationChain: _destinationChain,
+               planNonce: 0,
+               isActive: true,
+          })
+          providerProducts[msg.sender][product.productId] = product;
+          productNonces[msg.sender] += 1;
+          emit ProductCreated(
+               product.productId, msg.sender, 
+               product.name, product.chargeToken, 
+               product.destinationChain, 
+               product.isActive
+          );
+     }
+
+     function createPlan(
+          bytes32 _productId,
+          uint32 _chargeInterval,
+          uint256 _price
+     ) productExists(_productId) public {
+          Product storage product = providerProducts[msg.sender][_productId];
+          Plan memory plan = Plan({
+               productId: _productId,
+               planId: bytes32(product.planNonce),
+               provider: product.provider,
+               chargeInterval: _chargeInterval,
+               price: _price,
+               isActive: true
+          });
+          providerPlans[msg.sender][plan.planId] = plan;
+          product.planNonce += 1;
+          emit PlanCreated(
+               _productId, plan.planId, 
+               plan.provider, plan.price, 
+               plan.chargeInterval, plan.isActive
+          );
+     }
+
+     function updateProduct() {
+
+     }
+     function updatePlan() {
+
      }
 
      function createSubscriptionPlan(uint256 price,uint256 chargeInterval,address tokenAddress,address provider,address receivingAddress,uint8 receiveChainId)public{
