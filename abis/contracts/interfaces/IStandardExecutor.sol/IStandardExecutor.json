@@ -1,0 +1,4 @@
+[
+  "function execute(address,uint256,bytes) payable returns (bytes)",
+  "function executeBatch(tuple(address,uint256,bytes)[]) payable returns (bytes[])"
+]
