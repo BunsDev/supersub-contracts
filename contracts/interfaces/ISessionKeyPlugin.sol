@@ -20,6 +20,15 @@ pragma solidity ^0.8.22;
 import "./UserOperation.sol";
 import "./IPluginExecutor.sol";
 
+struct Call {
+    // The target address for the account to call.
+    address target;
+    // The value to send with the call.
+    uint256 value;
+    // The calldata for the call.
+    bytes data;
+}
+
 interface ISessionKeyPlugin {
     enum FunctionId {
         USER_OP_VALIDATION_SESSION_KEY
