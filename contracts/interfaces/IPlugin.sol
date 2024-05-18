@@ -6,7 +6,7 @@
 
 pragma solidity ^0.8.20;
 
-import {UserOperation} from "./UserOperation.sol";
+import { UserOperation } from "./UserOperation.sol";
 
 enum ManifestAssociatedFunctionType {
     // Function is not defined.
@@ -120,9 +120,11 @@ interface IPlugin {
     /// @param userOp The user operation.
     /// @param userOpHash The user operation hash.
     /// @return Packed validation data for validAfter (6 bytes), validUntil (6 bytes), and authorizer (20 bytes).
-    function preUserOpValidationHook(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
-        external
-        returns (uint256);
+    function preUserOpValidationHook(
+        uint8 functionId,
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) external returns (uint256);
 
     /// @notice Run the user operation validationFunction specified by the `functionId`.
     /// @param functionId An identifier that routes the call to different internal implementations, should there be
@@ -130,9 +132,11 @@ interface IPlugin {
     /// @param userOp The user operation.
     /// @param userOpHash The user operation hash.
     /// @return Packed validation data for validAfter (6 bytes), validUntil (6 bytes), and authorizer (20 bytes).
-    function userOpValidationFunction(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
-        external
-        returns (uint256);
+    function userOpValidationFunction(
+        uint8 functionId,
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) external returns (uint256);
 
     /// @notice Run the pre runtime validation hook specified by the `functionId`.
     /// @dev To indicate the entire call should revert, the function MUST revert.
@@ -160,9 +164,12 @@ interface IPlugin {
     /// @param value The call value.
     /// @param data The calldata sent.
     /// @return Context to pass to a post execution hook, if present. An empty bytes array MAY be returned.
-    function preExecutionHook(uint8 functionId, address sender, uint256 value, bytes calldata data)
-        external
-        returns (bytes memory);
+    function preExecutionHook(
+        uint8 functionId,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes memory);
 
     /// @notice Run the post execution hook specified by the `functionId`.
     /// @dev To indicate the entire call should revert, the function MUST revert.

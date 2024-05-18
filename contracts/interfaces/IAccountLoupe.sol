@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import {FunctionReference} from "../interfaces/IPluginManager.sol";
+import { FunctionReference } from "../interfaces/IPluginManager.sol";
 
 interface IAccountLoupe {
     /// @notice Config for an execution function, given a selector.
@@ -33,7 +33,9 @@ interface IAccountLoupe {
     /// @param selector The selector to get the hooks for.
     /// @return preUserOpValidationHooks The pre user op validation hooks for this selector.
     /// @return preRuntimeValidationHooks The pre runtime validation hooks for this selector.
-    function getPreValidationHooks(bytes4 selector)
+    function getPreValidationHooks(
+        bytes4 selector
+    )
         external
         view
         returns (

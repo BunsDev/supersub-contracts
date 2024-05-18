@@ -156,10 +156,10 @@ interface ISessionKeyPlugin {
     /// @param account The account to check.
     /// @param sessionKey The session key to check.
     /// @return The access control type for the session key on the account.
-    function getAccessControlType(address account, address sessionKey)
-        external
-        view
-        returns (ContractAccessControlType);
+    function getAccessControlType(
+        address account,
+        address sessionKey
+    ) external view returns (ContractAccessControlType);
 
     /// @notice Get an access control entry for a session key on an account.
     /// @param account The account to check.
@@ -169,10 +169,11 @@ interface ISessionKeyPlugin {
     /// access control type).
     /// @return checkSelectors Whether the target address should be checked for selectors during permissions
     /// enforcement.
-    function getAccessControlEntry(address account, address sessionKey, address targetAddress)
-        external
-        view
-        returns (bool isOnList, bool checkSelectors);
+    function getAccessControlEntry(
+        address account,
+        address sessionKey,
+        address targetAddress
+    ) external view returns (bool isOnList, bool checkSelectors);
 
     /// @notice Get whether a selector is on the access control list for a session key on an account.
     /// @param account The account to check.
@@ -193,19 +194,19 @@ interface ISessionKeyPlugin {
     /// @param sessionKey The session key to check.
     /// @return validAfter The time after which the session key is valid.
     /// @return validUntil The time until which the session key is valid.
-    function getKeyTimeRange(address account, address sessionKey)
-        external
-        view
-        returns (uint48 validAfter, uint48 validUntil);
+    function getKeyTimeRange(
+        address account,
+        address sessionKey
+    ) external view returns (uint48 validAfter, uint48 validUntil);
 
     /// @notice Get the native token spend limit for a session key on an account.
     /// @param account The account to check.
     /// @param sessionKey The session key to check.
     /// @return A struct with fields describing the state of native token spending limits on this session key.
-    function getNativeTokenSpendLimitInfo(address account, address sessionKey)
-        external
-        view
-        returns (SpendLimitInfo memory);
+    function getNativeTokenSpendLimitInfo(
+        address account,
+        address sessionKey
+    ) external view returns (SpendLimitInfo memory);
 
     /// @notice Get the gas spend limit for a session key on an account.
     /// @param account The account to check.
@@ -213,20 +214,21 @@ interface ISessionKeyPlugin {
     /// @return info A struct with fields describing the state of gas spending limits on this session key.
     /// @return shouldReset Whether this session key must be reset by calling `resetSessionKeyGasLimitTimestamp`
     /// before it can be used.
-    function getGasSpendLimit(address account, address sessionKey)
-        external
-        view
-        returns (SpendLimitInfo memory info, bool shouldReset);
+    function getGasSpendLimit(
+        address account,
+        address sessionKey
+    ) external view returns (SpendLimitInfo memory info, bool shouldReset);
 
     /// @notice Get the ERC20 spend limit for a session key on an account.
     /// @param account The account to check.
     /// @param sessionKey The session key to check.
     /// @param token The token to check.
     /// @return A struct with fields describing the state of ERC20 spending limits on this session key.
-    function getERC20SpendLimitInfo(address account, address sessionKey, address token)
-        external
-        view
-        returns (SpendLimitInfo memory);
+    function getERC20SpendLimitInfo(
+        address account,
+        address sessionKey,
+        address token
+    ) external view returns (SpendLimitInfo memory);
 
     /// @notice Get the required paymaster address for a session key on an account, if any.
     /// @param account The account to check.

@@ -4,10 +4,10 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC165} from "./ERC165.sol";
+import { ERC165 } from "./ERC165.sol";
 
-import {UserOperation} from "./interfaces/UserOperation.sol";
-import {IPlugin, PluginManifest, PluginMetadata} from "./interfaces/IPlugin.sol";
+import { UserOperation } from "./interfaces/UserOperation.sol";
+import { IPlugin, PluginManifest, PluginMetadata } from "./interfaces/IPlugin.sol";
 
 /// @title Base contract for plugins
 /// @dev Implements ERC-165 to support IPlugin's interface, which is a requirement
@@ -75,11 +75,11 @@ abstract contract BasePlugin is ERC165, IPlugin {
     /// @param userOp The user operation.
     /// @param userOpHash The user operation hash.
     /// @return Packed validation data for validAfter (6 bytes), validUntil (6 bytes), and authorizer (20 bytes).
-    function preUserOpValidationHook(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
-        external
-        virtual
-        returns (uint256)
-    {
+    function preUserOpValidationHook(
+        uint8 functionId,
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) external virtual returns (uint256) {
         (functionId, userOp, userOpHash);
         revert NotImplemented(msg.sig, functionId);
     }
@@ -90,11 +90,11 @@ abstract contract BasePlugin is ERC165, IPlugin {
     /// @param userOp The user operation.
     /// @param userOpHash The user operation hash.
     /// @return Packed validation data for validAfter (6 bytes), validUntil (6 bytes), and authorizer (20 bytes).
-    function userOpValidationFunction(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
-        external
-        virtual
-        returns (uint256)
-    {
+    function userOpValidationFunction(
+        uint8 functionId,
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) external virtual returns (uint256) {
         (functionId, userOp, userOpHash);
         revert NotImplemented(msg.sig, functionId);
     }
@@ -106,10 +106,12 @@ abstract contract BasePlugin is ERC165, IPlugin {
     /// @param sender The caller address.
     /// @param value The call value.
     /// @param data The calldata sent.
-    function preRuntimeValidationHook(uint8 functionId, address sender, uint256 value, bytes calldata data)
-        external
-        virtual
-    {
+    function preRuntimeValidationHook(
+        uint8 functionId,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external virtual {
         (functionId, sender, value, data);
         revert NotImplemented(msg.sig, functionId);
     }
@@ -121,10 +123,12 @@ abstract contract BasePlugin is ERC165, IPlugin {
     /// @param sender The caller address.
     /// @param value The call value.
     /// @param data The calldata sent.
-    function runtimeValidationFunction(uint8 functionId, address sender, uint256 value, bytes calldata data)
-        external
-        virtual
-    {
+    function runtimeValidationFunction(
+        uint8 functionId,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external virtual {
         (functionId, sender, value, data);
         revert NotImplemented(msg.sig, functionId);
     }
@@ -137,11 +141,12 @@ abstract contract BasePlugin is ERC165, IPlugin {
     /// @param value The call value.
     /// @param data The calldata sent.
     /// @return Context to pass to a post execution hook, if present. An empty bytes array MAY be returned.
-    function preExecutionHook(uint8 functionId, address sender, uint256 value, bytes calldata data)
-        external
-        virtual
-        returns (bytes memory)
-    {
+    function preExecutionHook(
+        uint8 functionId,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external virtual returns (bytes memory) {
         (functionId, sender, value, data);
         revert NotImplemented(msg.sig, functionId);
     }

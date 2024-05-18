@@ -47,8 +47,9 @@ interface IPluginExecutor {
     /// @param value The value to send with the call.
     /// @param data The calldata to send to the target.
     /// @return The return data from the call.
-    function executeFromPluginExternal(address target, uint256 value, bytes calldata data)
-        external
-        payable
-        returns (bytes memory);
+    function executeFromPluginExternal(
+        address target,
+        uint256 value,
+        bytes calldata data
+    ) external payable returns (bytes memory);
 }

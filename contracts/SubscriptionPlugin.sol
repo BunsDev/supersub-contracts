@@ -1,19 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import {BasePlugin} from "./BasePlugin.sol";
-import {IPluginExecutor} from "./interfaces/IPluginExecutor.sol";
-import {IERC20} from "./interfaces/IERC20.sol";
-import {
-    ManifestFunction,
-    ManifestAssociatedFunctionType,
-    ManifestAssociatedFunction,
-    PluginManifest,
-    PluginMetadata,
-    IPlugin
-} from "./interfaces/IPlugin.sol";
-
-
+import { BasePlugin } from "./BasePlugin.sol";
+import { IPluginExecutor } from "./interfaces/IPluginExecutor.sol";
+import { IERC20 } from "./interfaces/IERC20.sol";
+import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "./interfaces/IPlugin.sol";
 
 contract SubscriptionPlugin is BasePlugin {
     string public constant NAME = "Subscription Plugin";
@@ -60,49 +51,41 @@ contract SubscriptionPlugin is BasePlugin {
     mapping(address => mapping(bytes32 => Plan)) providerPlans;
     mapping(address => mapping(bytes32 => UserSubscription)) userSubscriptions;
 
-    event ProductCreated (
-        bytes32 indexed productId, 
-        address indexed provider, 
-        bytes32 name, 
-        address chargeToken,
-        uint8 destinationChain,
-        bool isActive
-    );
-    event ProductUpdated (
+    event ProductCreated(
         bytes32 indexed productId,
-        address receivingAddress, 
+        address indexed provider,
+        bytes32 name,
         address chargeToken,
         uint8 destinationChain,
         bool isActive
     );
-    event PlanCreated (
+    event ProductUpdated(
+        bytes32 indexed productId,
+        address receivingAddress,
+        address chargeToken,
+        uint8 destinationChain,
+        bool isActive
+    );
+    event PlanCreated(
         bytes32 indexed productId,
         bytes32 indexed planId,
         uint256 price,
         uint256 chargeInterval,
         bool isActive
     );
-    event PlanUpdated (
-        bytes32 indexed planId,
-        uint256 price,
-        uint256 chargeInterval,
-        bool isActive
-    );
-    event Subscribed (
+    event PlanUpdated(bytes32 indexed planId, uint256 price, uint256 chargeInterval, bool isActive);
+    event Subscribed(
         address indexed user,
         address provider,
         bytes32 indexed product,
         bytes32 indexed plan,
         bytes32 subscriptionId
     );
-    event UnSubscribed (
-        address indexed user,
-        bytes32 subscriptionId
-    );
+    event UnSubscribed(address indexed user, bytes32 subscriptionId);
 
-    constructor(uint8 chainId){
+    constructor(uint8 chainId) {
         // sessionKeyPluginAddr=_sessionKeyPluginAddr;
-        currentChainId=chainId;
+        currentChainId = chainId;
         //sessionKeyPlugin=ISessionKeyPlugin(_sessionKeyPluginAddr);
     }
 
@@ -120,13 +103,13 @@ contract SubscriptionPlugin is BasePlugin {
         require(validateERC20(addr));
         _;
     }
-     
+
     function createProduct(
-        bytes32 _name, 
-        address _chargeToken, 
-        address _receivingAddress, 
+        bytes32 _name,
+        address _chargeToken,
+        address _receivingAddress,
         uint8 _destinationChain
-    ) isValidERC20(_chargeToken) public {
+    ) public isValidERC20(_chargeToken) {
         Product memory product = Product({
             name: _name,
             productId: bytes32(uint256(productNonces[msg.sender])),
@@ -140,9 +123,11 @@ contract SubscriptionPlugin is BasePlugin {
         providerProducts[msg.sender][product.productId] = product;
         productNonces[msg.sender] += 1;
         emit ProductCreated(
-            product.productId, msg.sender, 
-            product.name, product.chargeToken, 
-            product.destinationChain, 
+            product.productId,
+            msg.sender,
+            product.name,
+            product.chargeToken,
+            product.destinationChain,
             product.isActive
         );
     }
@@ -151,7 +136,7 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 _productId,
         uint32 _chargeInterval,
         uint256 _price
-    ) productExists(_productId, msg.sender) public {
+    ) public productExists(_productId, msg.sender) {
         Product storage product = providerProducts[msg.sender][_productId];
         Plan memory plan = Plan({
             productId: _productId,
@@ -163,24 +148,22 @@ contract SubscriptionPlugin is BasePlugin {
         });
         providerPlans[msg.sender][plan.planId] = plan;
         product.planNonce += 1;
-        emit PlanCreated(
-            _productId, plan.planId, plan.price, 
-            plan.chargeInterval, plan.isActive
-        );
+        emit PlanCreated(_productId, plan.planId, plan.price, plan.chargeInterval, plan.isActive);
     }
 
     function updateProduct(
-        bytes32 _productId, 
-        address _chargeToken, 
-        address _receivingAddr, 
-        uint8 _destChain, bool _isActive
-    ) productExists(_productId, msg.sender) isValidERC20(_chargeToken) public {
+        bytes32 _productId,
+        address _chargeToken,
+        address _receivingAddr,
+        uint8 _destChain,
+        bool _isActive
+    ) public productExists(_productId, msg.sender) isValidERC20(_chargeToken) {
         Product storage product = providerProducts[msg.sender][_productId];
         product.chargeToken = _chargeToken;
         product.receivingAddress = _receivingAddr;
         product.destinationChain = _destChain;
         product.isActive = _isActive;
-        emit ProductUpdated (
+        emit ProductUpdated(
             product.productId,
             product.receivingAddress,
             product.chargeToken,
@@ -194,33 +177,30 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 _price,
         uint32 _chargeInterval,
         bool _isActive
-    ) planExists(_planId, msg.sender) public {
+    ) public planExists(_planId, msg.sender) {
         Plan storage plan = providerPlans[msg.sender][_planId];
         plan.price = _price;
         plan.chargeInterval = _chargeInterval;
         plan.isActive = _isActive;
-        emit PlanUpdated (
-            plan.planId,
-            plan.price,
-            plan.chargeInterval,
-            plan.isActive
-        );
+        emit PlanUpdated(plan.planId, plan.price, plan.chargeInterval, plan.isActive);
     }
 
-    function subscribe(bytes32 planId, bytes32 productId, address provider) productExists(productId, provider) planExists(planId, provider) public {
+    function subscribe(
+        bytes32 planId,
+        bytes32 productId,
+        address provider
+    ) public productExists(productId, provider) planExists(planId, provider) {
         // Todo: plan & product must be active
         //Product storage product = providerProducts[provider][productId];
         Plan storage plan = providerPlans[provider][planId];
-        UserSubscription memory subscription = UserSubscription(
-            {
-                subscriptionId: bytes32(subscriptionNonces[msg.sender]),
-                product: productId,
-                plan: plan.planId,
-                provider: provider,
-                isActive: true,
-                lastChargeDate:0
-            }
-        );
+        UserSubscription memory subscription = UserSubscription({
+            subscriptionId: bytes32(subscriptionNonces[msg.sender]),
+            product: productId,
+            plan: plan.planId,
+            provider: provider,
+            isActive: true,
+            lastChargeDate: 0
+        });
         userSubscriptions[msg.sender][subscription.subscriptionId] = subscription;
         subscriptionNonces[msg.sender] += 1;
         emit Subscribed(msg.sender, provider, productId, planId, subscription.subscriptionId);
@@ -290,13 +270,12 @@ contract SubscriptionPlugin is BasePlugin {
     //     emit PlanUnsubscribed(planId, msg.sender);
     // }
 
-
     // function isSubscribedToPlan(uint256 planId,address subscriber)public view returns(bool){
     //     return subscriptionStatuses[subscriber][planId].isActive;
     // }
 
     // function charge(uint256 planId,address subscriber)public{
-    //     SubscriptionPlan memory plan=subscriptionPlans[planId]; 
+    //     SubscriptionPlan memory plan=subscriptionPlans[planId];
     //     UserSubscription memory userSubscription=subscriptionStatuses[subscriber][planId];
     //     if(!isSubscribedToPlan(planId, subscriber)){
     //         revert("User not subscribed to plan");
@@ -329,6 +308,4 @@ contract SubscriptionPlugin is BasePlugin {
 
     //     emit SubscriptionCharged(planId, subscriber);
     // }
-
-
 }
