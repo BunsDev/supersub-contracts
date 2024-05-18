@@ -80,11 +80,20 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 subscriptionId
     );
     event UnSubscribed(address indexed user, bytes32 subscriptionId);
+    event SubscriptionPlanChanged(address indexed user, bytes32 subscriptionId, bytes32 planId);
+    event SubscriptionCharged(address indexed subscriber, bytes32 subscriptionId, bytes32 indexed planId, uint256 amount);
 
-    constructor(uint8 chainId) {
+    constructor(uint8 chainId, address[] memory _supportedTokens) {
         admin = msg.sender;
         currentChainId = chainId;
+        for (uint i = 0; i < _supportedTokens.length; i++) {
+            supportedTokens[_supportedTokens[i]] = true;
+        }
     }
+
+    // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    // ┃    Contract Modifiers     ┃
+    // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
     modifier onlyAdmin() {
         require(msg.sender == admin);
@@ -101,17 +110,41 @@ contract SubscriptionPlugin is BasePlugin {
         _;
     }
 
+    modifier isActiveProduct(bytes32 productId, address provider) {
+        require(providerProducts[provider][productId].isActive);
+        _;
+    }
+
+    modifier isActivePlan(bytes32 planId, address provider) {
+        require(providerPlans[provider][planId].isActive);
+        _;
+    }
+
     modifier isValidERC20(address addr) {
         require(validateERC20(addr));
         _;
     }
+
+    modifier isSupportedToken(address addr) {
+        require(supportedTokens[addr]);
+        _;
+    }
+
+    modifier isActiveSubscription(address subscriber, bytes32 subscriptionId) {
+        require(userSubscriptions[subscriber][subscriptionId].isActive);
+        _;
+    }
+
+    // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    // ┃    Execution functions    ┃
+    // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
     function createProduct(
         bytes32 _name,
         address _chargeToken,
         address _receivingAddress,
         uint8 _destinationChain
-    ) public isValidERC20(_chargeToken) {
+    ) public isValidERC20(_chargeToken) isSupportedToken(_chargeToken) {
         Product memory product = Product({
             name: _name,
             productId: bytes32(uint256(productNonces[msg.sender])),
@@ -159,7 +192,7 @@ contract SubscriptionPlugin is BasePlugin {
         address _receivingAddr,
         uint8 _destChain,
         bool _isActive
-    ) public productExists(_productId, msg.sender) isValidERC20(_chargeToken) {
+    ) public productExists(_productId, msg.sender) isValidERC20(_chargeToken) isSupportedToken(_chargeToken) {
         Product storage product = providerProducts[msg.sender][_productId];
         product.chargeToken = _chargeToken;
         product.receivingAddress = _receivingAddr;
@@ -191,17 +224,30 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 planId,
         bytes32 productId,
         address provider
-    ) public productExists(productId, provider) planExists(planId, provider) {
-        // Todo: plan & product must be active
-        //Product storage product = providerProducts[provider][productId];
-        Plan storage plan = providerPlans[provider][planId];
+    ) public isActiveProduct(productId, provider) isActivePlan(planId, provider) {
+        if (msg.sender.code.length == 0) {
+            revert("Account is not of smart contract type");
+        }
+        if (isSubscribedToProduct(msg.sender, productId)) {
+            revert("Product subscription already exists");
+        }
+        Plan memory plan = providerPlans[provider][planId];
+        Product memory product = providerProducts[provider][productId];
+        // Charge on first subscription
+        executeTransfer(
+            plan.price,
+            msg.sender,
+            product.chargeToken,
+            product.receivingAddress,
+            product.destinationChain
+        );
         UserSubscription memory subscription = UserSubscription({
             subscriptionId: bytes32(subscriptionNonces[msg.sender]),
             product: productId,
             plan: plan.planId,
             provider: provider,
             isActive: true,
-            lastChargeDate: 0
+            lastChargeDate: block.timestamp
         });
         userSubscriptions[msg.sender][subscription.subscriptionId] = subscription;
         subscriptionNonces[msg.sender] += 1;
@@ -213,6 +259,29 @@ contract SubscriptionPlugin is BasePlugin {
         emit UnSubscribed(msg.sender, subscriptionId);
     }
 
+    // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    // ┃  Author Plugin functions  ┃
+    // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+    function changeSubscriptionPlan(
+        bytes32 productId,
+        bytes32 planId,
+        bytes32 subscriptionId,
+        address provider
+    ) isActiveProduct(productId, provider) isActivePlan(planId, provider) public {
+        UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
+        Plan memory plan = providerPlans[provider][planId];
+        if (subscription.provider != provider) {
+            revert("Provider mismatch");
+        }
+        if (plan.productId != subscription.product) {
+            revert("Plan does not belong to current product");
+        }
+        subscription.plan = planId;
+        subscription.isActive = true;
+        emit SubscriptionPlanChanged(msg.sender, subscriptionId, planId);
+    }
+
     function validateERC20(address tokenAddr) internal view returns (bool) {
         try IERC20(tokenAddr).totalSupply() returns (uint256) {
             return true;
@@ -220,6 +289,65 @@ contract SubscriptionPlugin is BasePlugin {
             return false;
         }
     }
+
+    function isSubscribedToProduct(address subscriber, bytes32 productId) public view returns (bool) {
+        for (uint i = 0; i < subscriptionNonces[subscriber]; i++) {
+            if (userSubscriptions[subscriber][bytes32(i)].product == productId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function executeTransfer(
+        uint256 amount,
+        address subscriber, 
+        address chargeToken,
+        address receivingAddress, 
+        uint8 destinationChain
+    ) internal {
+        bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), amount));
+        IPluginExecutor(subscriber).executeFromPluginExternal(chargeToken, 0, callData);
+        if (destinationChain == currentChainId) {
+            IERC20(chargeToken).transfer(receivingAddress, amount);
+        } else {
+            //use CCIP for token transfer instead
+        }   
+    }
+
+    function charge(
+        bytes32 planId, address provider, 
+        bytes32 productId, address subscriber, 
+        bytes32 subscriptionId
+    ) public isActivePlan(planId, provider) isActiveProduct(productId, provider) isActiveSubscription(subscriber, subscriptionId) {
+        Plan memory plan = providerPlans[provider][planId];
+        Product memory product = providerProducts[provider][productId];
+        UserSubscription memory userSubscription = userSubscriptions[subscriber][subscriptionId];
+
+        require(plan.chargeInterval + userSubscription.lastChargeDate <= block.timestamp, "time Interval not met");
+        userSubscription.lastChargeDate = block.timestamp;
+        executeTransfer(
+            plan.price,
+            subscriber,
+            product.chargeToken,
+            product.receivingAddress,
+            product.destinationChain
+        );
+        emit SubscriptionCharged(subscriber, subscriptionId, planId, plan.price);
+    }
+
+    function getUserSubscriptions(address subscriber) public view returns (UserSubscription[] memory subscriptions) {
+        uint256 nonce = subscriptionNonces[subscriber];
+        subscriptions = new UserSubscription[](nonce);
+        for (uint i = 0; i < subscriptionNonces[subscriber]; i++) {
+            subscriptions[i] = userSubscriptions[subscriber][bytes32(i)];
+        }
+        return subscriptions;
+    }
+
+    // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    // ┃    Plugin interface functions    ┃
+    // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
     /// @inheritdoc BasePlugin
     function onInstall(bytes calldata) external pure override {}
@@ -237,13 +365,14 @@ contract SubscriptionPlugin is BasePlugin {
 
         // Specify execution function that can be called from the SCA
         // SCA can only call subscribe and unsubscribe functions
-        manifest.executionFunctions = new bytes4[](6);
+        manifest.executionFunctions = new bytes4[](7);
         manifest.executionFunctions[0] = this.subscribe.selector;
         manifest.executionFunctions[1] = this.unSubscribe.selector;
-        manifest.executionFunctions[2] = this.createProduct.selector;
-        manifest.executionFunctions[3] = this.createPlan.selector;
-        manifest.executionFunctions[4] = this.updateProduct.selector;
-        manifest.executionFunctions[5] = this.updatePlan.selector;
+        manifest.executionFunctions[2] = this.changeSubscriptionPlan.selector;
+        manifest.executionFunctions[3] = this.createProduct.selector;
+        manifest.executionFunctions[4] = this.createPlan.selector;
+        manifest.executionFunctions[5] = this.updateProduct.selector;
+        manifest.executionFunctions[6] = this.updatePlan.selector;
 
         // A dependency manifest function to validate user operations using the single owner dependency plugin
         ManifestFunction memory ownerUserOpValidationFunction = ManifestFunction({
@@ -254,7 +383,7 @@ contract SubscriptionPlugin is BasePlugin {
 
         // set the manifest function as validation function for calls to `subscribe`,
         // `unsubscribe`, `createPlan`, `createProduct`, `Updateplan` and `updateProduct` from the SCA.
-        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](6);
+        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](7);
         manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
             executionSelector: this.subscribe.selector,
             associatedFunction: ownerUserOpValidationFunction
@@ -264,24 +393,28 @@ contract SubscriptionPlugin is BasePlugin {
             associatedFunction: ownerUserOpValidationFunction
         });
         manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
-            executionSelector: this.createProduct.selector,
+            executionSelector: this.changeSubscriptionPlan.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
         manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
-            executionSelector: this.createPlan.selector,
+            executionSelector: this.createProduct.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
         manifest.userOpValidationFunctions[4] = ManifestAssociatedFunction({
-            executionSelector: this.updateProduct.selector,
+            executionSelector: this.createPlan.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
         manifest.userOpValidationFunctions[5] = ManifestAssociatedFunction({
+            executionSelector: this.updateProduct.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[6] = ManifestAssociatedFunction({
             executionSelector: this.updatePlan.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
 
-        // Prevent runtime calls to subscribe and unsubscribe
-        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](2);
+        // Prevent runtime calls to subscribe, unsubscribe and changeSubscriptionPlan
+        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](3);
         manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
             executionSelector: this.subscribe.selector,
             associatedFunction: ManifestFunction({
@@ -290,9 +423,16 @@ contract SubscriptionPlugin is BasePlugin {
                 dependencyIndex: 0
             })
         });
-        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](2);
-        manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
+        manifest.preRuntimeValidationHooks[1] = ManifestAssociatedFunction({
             executionSelector: this.unSubscribe.selector,
+            associatedFunction: ManifestFunction({
+                functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
+                functionId: 0,
+                dependencyIndex: 0
+            })
+        });
+        manifest.preRuntimeValidationHooks[2] = ManifestAssociatedFunction({
+            executionSelector: this.changeSubscriptionPlan.selector,
             associatedFunction: ManifestFunction({
                 functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
                 functionId: 0,
@@ -314,73 +454,4 @@ contract SubscriptionPlugin is BasePlugin {
         metadata.author = AUTHOR;
         return metadata;
     }
-
-    // function isPluginInstalled(address pluginAddr,address userAddr)public view returns(bool){
-    //     IAccountLoupe accountLoupe=IAccountLoupe(userAddr);
-    //     address[] memory installedPlugins= accountLoupe.getInstalledPlugins();
-    //     return addressInArray(pluginAddr, installedPlugins);
-    // }
-
-    // function addressInArray(address findAddress,address[] memory addressArray)private pure returns(bool){
-    //     for (uint i = 0; i < addressArray.length; i++) {
-    //         if (addressArray[i] == findAddress) {
-    //         return true;
-    //         }
-    //     }
-
-    //     return false;
-    // }
-
-    // function unsubscribe(uint256 planId)public{
-    //     if(msg.sender.code.length==0){
-    //         revert("Account is not of smart contract type");
-    //     }
-    //     if(!isSubscribedToPlan(planId, msg.sender)){
-    //         revert("User not subscribed to plan");
-    //     }
-    //     SubscriptionPlan memory plan=subscriptionPlans[planId];
-    //     uint256 tokenSpendLimitValue=tokenSpendLimitValues[msg.sender][plan.tokenAddress].limitValue;
-    //     tokenSpendLimitValues[msg.sender][plan.tokenAddress].limitValue=tokenSpendLimitValue-plan.price;
-    //     subscriptionStatuses[msg.sender][planId].isActive=false;
-    //     emit PlanUnsubscribed(planId, msg.sender);
-    // }
-
-    // function isSubscribedToPlan(uint256 planId,address subscriber)public view returns(bool){
-    //     return subscriptionStatuses[subscriber][planId].isActive;
-    // }
-
-    // function charge(uint256 planId,address subscriber)public{
-    //     SubscriptionPlan memory plan=subscriptionPlans[planId];
-    //     UserSubscription memory userSubscription=subscriptionStatuses[subscriber][planId];
-    //     if(!isSubscribedToPlan(planId, subscriber)){
-    //         revert("User not subscribed to plan");
-    //     }
-    //     if(plan.deleted==true){
-    //         revert("Subscription has been deleted");
-    //     }
-
-    //     assert(plan.chargeInterval+userSubscription.lastChargeDate<=block.timestamp);
-    //     assert(userSubscription.startTime>=block.timestamp);
-    //     assert(userSubscription.endTime<=block.timestamp);
-
-    //     bool isSessionAllowed=sessionKeyPlugin.isSessionKeyOf(msg.sender,address(this));
-    //     if(!isSessionAllowed){
-    //         revert("User has not given sesssion permission to contract");
-    //     }
-    //     uint256 totalTokenAllowance= (sessionKeyPlugin.getERC20SpendLimitInfo(msg.sender, address(this), plan.tokenAddress)).limit;
-    //     assert(plan.price<=totalTokenAllowance);
-
-    //     //execute transfer to this contract with session key
-    //     Call[] memory calls = new Call[](1);
-    //     bytes memory callData=abi.encodeCall(IERC20.transfer, (address(this), plan.price));
-    //     calls[0] = Call({target: plan.tokenAddress, value: 0, data: callData});
-    //     sessionKeyPlugin.executeWithSessionKey(calls, address(this));
-    //     if(plan.receiveChainId==currentChainId){
-    //         IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
-    //     }else{
-    //         //use CCIP for token transfer instead
-    //     }
-
-    //     emit SubscriptionCharged(planId, subscriber);
-    // }
 }
