@@ -235,9 +235,62 @@ contract SubscriptionPlugin is BasePlugin {
 
         // Specify execution function that can be called from the SCA
         // SCA can only call subscribe and unsubscribe functions
-        manifest.executionFunctions = new bytes4[](2);
+        manifest.executionFunctions = new bytes4[](6);
         manifest.executionFunctions[0] = this.subscribe.selector;
         manifest.executionFunctions[1] = this.unSubscribe.selector;
+        manifest.executionFunctions[2] = this.createProduct.selector;
+        manifest.executionFunctions[3] = this.createPlan.selector;
+        manifest.executionFunctions[4] = this.updateProduct.selector;
+        manifest.executionFunctions[5] = this.updatePlan.selector;
+
+        // A dependency manifest function to validate user operations using the single owner dependency plugin
+        ManifestFunction memory ownerUserOpValidationFunction = ManifestFunction({
+            functionType: ManifestAssociatedFunctionType.DEPENDENCY,
+            functionId: 0, // unused since it's a dependency
+            dependencyIndex: _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION
+        });
+
+        // set the manifest function as validation function for calls to `subscribe`,
+        // `unsubscribe`, `createPlan`, `createProduct`, `Updateplan` and `updateProduct` from the SCA.
+        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](6);
+        manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
+            executionSelector: this.subscribe.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[1] = ManifestAssociatedFunction({
+            executionSelector: this.unSubscribe.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
+            executionSelector: this.createProduct.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
+            executionSelector: this.createPlan.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[4] = ManifestAssociatedFunction({
+            executionSelector: this.updateProduct.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[5] = ManifestAssociatedFunction({
+            executionSelector: this.updatePlan.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+
+        // Prevent runtime calls to subscribe and unsubscribe
+        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](2);
+        manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
+            executionSelector: this.subscribe.selector,
+            associatedFunction: ManifestFunction({
+                functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
+                functionId: 0,
+                dependencyIndex: 0
+            })
+        });
+
+        manifest.permitAnyExternalAddress = true;
+        manifest.canSpendNativeToken = true;
     }
 
     // function isPluginInstalled(address pluginAddr,address userAddr)public view returns(bool){
