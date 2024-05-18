@@ -9,13 +9,10 @@ import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFun
 contract SubscriptionPlugin is BasePlugin {
     string public constant NAME = "Subscription Plugin";
     string public constant VERSION = "1.0.0";
-    string public constant AUTHOR = "Emmanuel Oluwatobi";
+    string public constant AUTHOR = "Tee-py & Jaybee";
 
-    uint256 internal constant _MANIFEST_DEPEDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
+    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
 
-    //  uint256 numSubscriptionPlans;
-    //  address public immutable sessionKeyPluginAddr;
-    //  ISessionKeyPlugin public immutable sessionKeyPlugin;
     struct Product {
         bytes32 productId;
         bytes32 name;
@@ -43,8 +40,9 @@ contract SubscriptionPlugin is BasePlugin {
         bool isActive;
     }
 
-    // ISessionKeyPlugin public immutable sessionKeyPluginAddr;
     uint8 currentChainId;
+    address public admin;
+    mapping(address => bool) public supportedTokens;
     mapping(address => uint256) productNonces;
     mapping(address => uint256) subscriptionNonces;
     mapping(address => mapping(bytes32 => Product)) providerProducts;
@@ -84,9 +82,13 @@ contract SubscriptionPlugin is BasePlugin {
     event UnSubscribed(address indexed user, bytes32 subscriptionId);
 
     constructor(uint8 chainId) {
-        // sessionKeyPluginAddr=_sessionKeyPluginAddr;
+        admin = msg.sender;
         currentChainId = chainId;
-        //sessionKeyPlugin=ISessionKeyPlugin(_sessionKeyPluginAddr);
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin);
+        _;
     }
 
     modifier productExists(bytes32 productId, address provider) {
@@ -288,9 +290,29 @@ contract SubscriptionPlugin is BasePlugin {
                 dependencyIndex: 0
             })
         });
+        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](2);
+        manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
+            executionSelector: this.unSubscribe.selector,
+            associatedFunction: ManifestFunction({
+                functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
+                functionId: 0,
+                dependencyIndex: 0
+            })
+        });
 
         manifest.permitAnyExternalAddress = true;
         manifest.canSpendNativeToken = true;
+
+        return manifest;
+    }
+
+    // @inheritdoc BasePlugin
+    function pluginMetadata() external pure virtual override returns (PluginMetadata memory) {
+        PluginMetadata memory metadata;
+        metadata.name = NAME;
+        metadata.version = VERSION;
+        metadata.author = AUTHOR;
+        return metadata;
     }
 
     // function isPluginInstalled(address pluginAddr,address userAddr)public view returns(bool){
