@@ -4,8 +4,10 @@ pragma solidity ^0.8.19;
 import { IERC20 } from "./interfaces/IERC20.sol";
 import { BasePlugin } from "./libraries/BasePlugin.sol";
 import { IPluginExecutor } from "./interfaces/IPluginExecutor.sol";
+import { FunctionReference } from "./interfaces/IPluginManager.sol";
 
 import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "./interfaces/IPlugin.sol";
+import { IMultiOwnerPlugin } from "./interfaces/IMultiOwnerPlugin.sol";
 
 /// @title Counter Plugin
 /// @author Your name
@@ -20,7 +22,9 @@ contract SubscriptionManagerPlugin is BasePlugin {
     // since it is the first, and only, plugin the index 0 will reference the single owner plugin
     // we can use this to tell the modular account that we should use the single owner plugin to validate our user op
     // in other words, we'll say "make sure the person calling increment is an owner of the account using our single plugin"
-    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
+    // Constants used in the manifest
+    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_RUNTIME_VALIDATION = 0;
+    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 1;
 
     /*
      * Note to Developer:
@@ -122,6 +126,10 @@ contract SubscriptionManagerPlugin is BasePlugin {
         supportedTokens[tokenAddr] = true;
     }
 
+    function pack(address addr, uint8 functionId) public pure returns (FunctionReference) {
+        return FunctionReference.wrap(bytes21(bytes20(addr)) | bytes21(uint168(functionId)));
+    }
+
     function createSubscriptionPlan(
         uint256 price,
         uint256 chargeInterval,
@@ -130,6 +138,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
         uint8 receiveChainId
     ) public {
         require(supportedTokens[tokenAddress], "token specified is not supported");
+        require(chargeInterval < block.timestamp, "Invalid charge Interval ");
         SubscriptionPlan memory plan = SubscriptionPlan({
             planId: numSubscriptionPlans,
             price: price,
@@ -180,10 +189,6 @@ contract SubscriptionManagerPlugin is BasePlugin {
 
     //only called by user operation by smart account
     function subscribe(uint256 planId, uint256 duration) public planExists(planId) planNotDeleted(planId) {
-        //checkif account is a erc6900 account, install plugin by calling smart contract account(use init data and manifest hash from the plugin)
-        if (msg.sender.code.length == 0) {
-            revert("Account is not of smart contract type");
-        }
         if (isSubscribedToPlan(planId, msg.sender)) {
             revert("User already subscribed to plan");
         }
@@ -200,9 +205,6 @@ contract SubscriptionManagerPlugin is BasePlugin {
 
     // same performing conditions as
     function unsubscribe(uint256 planId) public planExists(planId) {
-        if (msg.sender.code.length == 0) {
-            revert("Account is not of smart contract type");
-        }
         if (!isSubscribedToPlan(planId, msg.sender)) {
             revert("User not subscribed to plan");
         }
@@ -211,7 +213,9 @@ contract SubscriptionManagerPlugin is BasePlugin {
     }
 
     function isSubscribedToPlan(uint256 planId, address subscriber) public view returns (bool) {
-        return subscriptionStatuses[subscriber][planId].isActive;
+        return
+            subscriptionStatuses[subscriber][planId].endTime > block.timestamp &&
+            subscriptionStatuses[subscriber][planId].isActive;
     }
 
     //called direectly in runtime
@@ -225,9 +229,9 @@ contract SubscriptionManagerPlugin is BasePlugin {
             revert("Subscription has been deleted");
         }
 
-        require(plan.chargeInterval + userSubscription.lastChargeDate <= block.timestamp, "time Interval not met");
-        require(userSubscription.startTime >= block.timestamp, "subscription is yet to start");
-        require(userSubscription.endTime <= block.timestamp, "subscription has ended");
+        require(block.timestamp - userSubscription.lastChargeDate >= plan.chargeInterval, "time Interval not met");
+        require(userSubscription.startTime <= block.timestamp, "subscription is yet to start");
+        require(userSubscription.endTime >= block.timestamp, "subscription has ended");
 
         //execute transfer to this contract with session key
         bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), plan.price));
@@ -260,8 +264,11 @@ contract SubscriptionManagerPlugin is BasePlugin {
         // since we are using the modular account, we will specify one depedency
         // which will handle the user op validation for ownership
         // you can find this depedency specified in the installPlugin call in the tests
-        manifest.dependencyInterfaceIds = new bytes4[](1);
-        manifest.dependencyInterfaceIds[0] = type(IPlugin).interfaceId;
+        manifest.dependencyInterfaceIds = new bytes4[](2);
+        manifest.dependencyInterfaceIds[_MANIFEST_DEPENDENCY_INDEX_OWNER_RUNTIME_VALIDATION] = type(IPlugin)
+            .interfaceId;
+        manifest.dependencyInterfaceIds[_MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION] = type(IPlugin)
+            .interfaceId;
 
         // we only have one execution function that can be called, which is the increment function
         // here we define that increment function on the manifest as something that can be called during execution
@@ -314,6 +321,8 @@ contract SubscriptionManagerPlugin is BasePlugin {
             })
         });
 
+        manifest.canSpendNativeToken = true;
+        manifest.permitAnyExternalAddress = true;
         return manifest;
     }
 

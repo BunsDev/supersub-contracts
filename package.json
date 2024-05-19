@@ -9,7 +9,9 @@
     "lint": "solhint 'contracts/**/*.sol'",
     "build": "hardhat compile",
     "test": "hardhat test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev": "npx ts-node scripts/main.ts",
+    "deploy": "npx hardhat run --network amoy scripts/deploy.ts"
   },
   "keywords": [],
   "author": "",
