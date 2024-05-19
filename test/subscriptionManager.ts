@@ -1,5 +1,4 @@
 import { time, loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
-import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
 import hre from 'hardhat';
 
@@ -14,7 +13,16 @@ describe('Subscription Manager', function () {
     const [owner, otherAccount] = await hre.ethers.getSigners();
 
     const SubscriptionManager = await hre.ethers.getContractFactory('SubscriptionManagerPlugin');
-    const subscriptionManager = await SubscriptionManager.deploy(['0xdAC17F958D2ee523a2206206994597C13D831ec7'], 4);
+    const swapRouterAddr = '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD';
+    const swapFactoryAddr = '0x4648a43B2C14Da09FdF82B161150d3F634f40491';
+    const WETH = '0x5302086A3a25d473aAbBd0356eFf8Dd811a4d89B';
+    const subscriptionManager = await SubscriptionManager.deploy(
+      ['0xdAC17F958D2ee523a2206206994597C13D831ec7'],
+      4,
+      swapFactoryAddr,
+      swapRouterAddr,
+      WETH
+    );
 
     return {
       subscriptionManager,
@@ -82,11 +90,7 @@ describe('Subscription Manager', function () {
           4
         );
 
-        const editPlanTxn = subscriptionManager.changeSubscriptionPlanPaymentInfo(
-          numSubscriptionPlans,
-          owner.address,
-          3
-        );
+        const editPlanTxn = subscriptionManager.changeSubscriptionPlanInfo(numSubscriptionPlans, owner.address, 3);
         await expect(editPlanTxn).not.to.be.reverted;
 
         expect(await subscriptionManager.numSubscriptionPlans()).to.equal(numSubscriptionPlans + BigInt(1));
@@ -110,7 +114,7 @@ describe('Subscription Manager', function () {
       const chargeInterval = 24 * 3600 * 30;
       const tokenAddr = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
       const numSubscriptionPlans = await subscriptionManager.numSubscriptionPlans();
-      const createPlanTxn = subscriptionManager.changeSubscriptionPlanPaymentInfo(
+      const createPlanTxn = subscriptionManager.changeSubscriptionPlanInfo(
         numSubscriptionPlans + BigInt(1),
         owner.address,
         3
@@ -151,7 +155,7 @@ describe('Subscription Manager', function () {
       const chargeInterval = 24 * 3600 * 30;
       const tokenAddr = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
       const numSubscriptionPlans = await subscriptionManager.numSubscriptionPlans();
-      const createPlanTxn = subscriptionManager.changeSubscriptionPlanPaymentInfo(
+      const createPlanTxn = subscriptionManager.changeSubscriptionPlanInfo(
         numSubscriptionPlans + BigInt(1),
         owner.address,
         3
@@ -166,7 +170,7 @@ describe('Subscription Manager', function () {
       const chargeInterval = 24 * 3600 * 30;
       const tokenAddr = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
       const numSubscriptionPlans = await subscriptionManager.numSubscriptionPlans();
-      const createPlanTxn = subscriptionManager.changeSubscriptionPlanPaymentInfo(
+      const createPlanTxn = subscriptionManager.changeSubscriptionPlanInfo(
         numSubscriptionPlans + BigInt(1),
         owner.address,
         3
@@ -212,11 +216,7 @@ describe('Subscription Manager', function () {
           4
         );
 
-        const editPlanTxn = subscriptionManager.changeSubscriptionPlanPaymentInfo(
-          numSubscriptionPlans,
-          owner.address,
-          3
-        );
+        const editPlanTxn = subscriptionManager.changeSubscriptionPlanInfo(numSubscriptionPlans, owner.address, 3);
         await expect(editPlanTxn).not.to.be.reverted;
 
         expect(await subscriptionManager.numSubscriptionPlans()).to.equal(numSubscriptionPlans + BigInt(1));

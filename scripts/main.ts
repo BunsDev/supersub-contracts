@@ -24,7 +24,7 @@ envConfig();
 // Polygon Amoy Testnet (matic-amoy)
 // Polygon Mumbai Testnet (matic-mumbai)
 
-export const subscriptionPluginAddr: Address = '0x6bA36547fBa028C153e6EC953c0209F5B40f61aB';
+export const subscriptionPluginAddr: Address = '0xf74e5B1F5B58cc274F86f40Dc7450BFA52606D95';
 export const PRIVATE_KEY_1 = process.env.PRIVATE_KEY_1;
 export const PRIVATE_KEY_2 = process.env.PRIVATE_KEY_2;
 export const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
@@ -34,7 +34,7 @@ export const ACCOUNT_ABSTRATION_POLICY_ID = process.env.ACCOUNT_ABSTRATION_POLIC
 async function main() {
   const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
   const signer = new Wallet(PRIVATE_KEY_2!, provider);
-  const account = new UserAccount(signer.privateKey!, polygonAmoy, 5);
+  const account = new UserAccount(signer.privateKey!, polygonAmoy, 6);
   const smartAccountAddress = (await account.initializeAccountClient()).getAddress();
   // const tx=await signer.sendTransaction({
   //      to:smartAccountAddress,
@@ -43,15 +43,15 @@ async function main() {
   // })
   // await tx.wait()
   const subscription = new Subscription('matic-amoy', subscriptionPluginAddr);
-  await subscription.createPlan();
-  console.log('Successfully created Plan');
-  const planId = Number(await subscription.contract.numSubscriptionPlans());
-  console.log(planId);
+//   await subscription.createPlan();
+//   console.log('Successfully created Plan');
+//   const planId = Number(await subscription.contract.numSubscriptionPlans());
+//   console.log(planId);
 
-  // await account.sendEther()
-  const duration = 24 * 30 * 12 * 60 * 60;
-  //      // console.log(duration)
-  await account.subscribe(subscription, planId - 1, duration);
+//   // await account.sendEther()
+//   const duration = 24 * 30 * 12 * 60 * 60;
+//   //      // console.log(duration)
+//   await account.subscribe(subscription, planId - 1, duration);
   console.log(await account.getSubscriptions(subscription));
   console.log(await account.getSubscriptionInfo(subscription, 1));
   console.log(await subscription.getSubscriptionById(0));
@@ -62,11 +62,11 @@ async function charge() {
   const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
   const subscription = new Subscription('matic-amoy', subscriptionPluginAddr);
   const signer = new Wallet(PRIVATE_KEY_2!, provider);
-  const account = new UserAccount(signer.privateKey!, polygonAmoy, 5);
+  const account = new UserAccount(signer.privateKey!, polygonAmoy, 6);
   const smartAccountAddress = (await account.initializeAccountClient()).getAddress();
   await subscription.charge(0, smartAccountAddress);
   console.log('Successfully charged subscription');
 }
 
-// main()
-charge();
+main()
+// charge();
