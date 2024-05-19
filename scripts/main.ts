@@ -43,15 +43,15 @@ async function main() {
   // })
   // await tx.wait()
   const subscription = new Subscription('matic-amoy', subscriptionPluginAddr);
-//   await subscription.createPlan();
-//   console.log('Successfully created Plan');
-//   const planId = Number(await subscription.contract.numSubscriptionPlans());
-//   console.log(planId);
+  //   await subscription.createPlan();
+  //   console.log('Successfully created Plan');
+  //   const planId = Number(await subscription.contract.numSubscriptionPlans());
+  //   console.log(planId);
 
-//   // await account.sendEther()
-//   const duration = 24 * 30 * 12 * 60 * 60;
-//   //      // console.log(duration)
-//   await account.subscribe(subscription, planId - 1, duration);
+  //   // await account.sendEther()
+  //   const duration = 24 * 30 * 12 * 60 * 60;
+  //   //      // console.log(duration)
+  //   await account.subscribe(subscription, planId - 1, duration);
   console.log(await account.getSubscriptions(subscription));
   console.log(await account.getSubscriptionInfo(subscription, 1));
   console.log(await subscription.getSubscriptionById(0));
@@ -68,5 +68,5 @@ async function charge() {
   console.log('Successfully charged subscription');
 }
 
-main()
+main();
 // charge();

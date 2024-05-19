@@ -87,17 +87,33 @@ contract SubscriptionManagerPlugin is BasePlugin {
         uint8 receiveChainId
     );
     event PlanDeleted(uint256 planId);
-    event PlanSubscribed(uint256 planId, address indexed subscriber,address indexed paymentToken,uint256 endTime);
-    event PlanSubscriptionChanged(uint256 planId, address indexed subscriber,address indexed paymentToken,uint256 endTime);
+    event PlanSubscribed(uint256 planId, address indexed subscriber, address indexed paymentToken, uint256 endTime);
+    event PlanSubscriptionChanged(
+        uint256 planId,
+        address indexed subscriber,
+        address indexed paymentToken,
+        uint256 endTime
+    );
     event PlanUnsubscribed(uint256 planId, address indexed subscriber);
-    event SubscriptionCharged(uint256 planId, address indexed subscriber,address indexed paymentToken,uint256 paymentTokenAmount);
+    event SubscriptionCharged(
+        uint256 planId,
+        address indexed subscriber,
+        address indexed paymentToken,
+        uint256 paymentTokenAmount
+    );
 
-    constructor(address[] memory _supportedTokens, uint8 chainId,address swapFactoryAddr,address swapRouterAddr,address _WETH) {
+    constructor(
+        address[] memory _supportedTokens,
+        uint8 chainId,
+        address swapFactoryAddr,
+        address swapRouterAddr,
+        address _WETH
+    ) {
         currentChainId = chainId;
-        swapFactory=IUniswapV3Factory(swapFactoryAddr);
-        swapRouter=ISwapRouter(swapRouterAddr);
+        swapFactory = IUniswapV3Factory(swapFactoryAddr);
+        swapRouter = ISwapRouter(swapRouterAddr);
         owner = msg.sender;
-        WETH=_WETH;
+        WETH = _WETH;
         for (uint i = 0; i < _supportedTokens.length; i++) {
             supportedTokens[_supportedTokens[i]] = true;
         }
@@ -199,52 +215,57 @@ contract SubscriptionManagerPlugin is BasePlugin {
     }
 
     //only called by user operation by smart account
-    function subscribe(uint256 planId, uint256 duration,address paymentToken,uint24 paymentTokenSwapFee) public planExists(planId) planNotDeleted(planId) {
+    function subscribe(
+        uint256 planId,
+        uint256 duration,
+        address paymentToken,
+        uint24 paymentTokenSwapFee
+    ) public planExists(planId) planNotDeleted(planId) {
         if (isSubscribedToPlan(planId, msg.sender)) {
             revert("User already subscribed to plan");
         }
 
         SubscriptionPlan memory plan = subscriptionPlans[planId];
-        if(plan.tokenAddress!=paymentToken){
-           address tokenA=plan.tokenAddress;
-           address tokenB=paymentToken;
-          if(plan.tokenAddress==address(0)){
-               tokenA=WETH;
-          }
-          if(paymentToken==address(0)){
-               tokenB=WETH;
-          }
-          address poolAddr=swapFactory.getPool(tokenA, tokenB, paymentTokenSwapFee);
-          require(poolAddr!=address(0),"Pool does not exist for specified pool");
+        if (plan.tokenAddress != paymentToken) {
+            address tokenA = plan.tokenAddress;
+            address tokenB = paymentToken;
+            if (plan.tokenAddress == address(0)) {
+                tokenA = WETH;
+            }
+            if (paymentToken == address(0)) {
+                tokenB = WETH;
+            }
+            address poolAddr = swapFactory.getPool(tokenA, tokenB, paymentTokenSwapFee);
+            require(poolAddr != address(0), "Pool does not exist for specified pool");
         }
         UserSubscription memory userSubscription = UserSubscription({
             startTime: block.timestamp,
             endTime: block.timestamp + duration,
             isActive: true,
-            paymentToken:paymentToken,
-            paymentTokenSwapFee:paymentTokenSwapFee,
+            paymentToken: paymentToken,
+            paymentTokenSwapFee: paymentTokenSwapFee,
             lastChargeDate: 0
         });
         subscriptionStatuses[msg.sender][planId] = userSubscription;
-        emit PlanSubscribed(planId, msg.sender,userSubscription.paymentToken,userSubscription.endTime);
+        emit PlanSubscribed(planId, msg.sender, userSubscription.paymentToken, userSubscription.endTime);
     }
 
-
-    function changeSubscriptionPlanPaymentInfo(uint256 planId,uint256 endTime,address paymentToken) public planNotDeleted(planId){
-         require(isSubscribedToPlan(planId, msg.sender),"User not subscribed to plan");
-         require(endTime>block.timestamp,"Invalid endTime Provided");
-         UserSubscription storage userSubscription=subscriptionStatuses[msg.sender][planId];
-         userSubscription.paymentToken = paymentToken;
-         userSubscription.endTime=endTime;
-         emit PlanSubscriptionChanged(planId, msg.sender,paymentToken,endTime);
-
+    function changeSubscriptionPlanPaymentInfo(
+        uint256 planId,
+        uint256 endTime,
+        address paymentToken
+    ) public planNotDeleted(planId) {
+        require(isSubscribedToPlan(planId, msg.sender), "User not subscribed to plan");
+        require(endTime > block.timestamp, "Invalid endTime Provided");
+        UserSubscription storage userSubscription = subscriptionStatuses[msg.sender][planId];
+        userSubscription.paymentToken = paymentToken;
+        userSubscription.endTime = endTime;
+        emit PlanSubscriptionChanged(planId, msg.sender, paymentToken, endTime);
     }
-
-
 
     // same performing conditions as
     function unsubscribe(uint256 planId) public planExists(planId) {
-        require(isSubscribedToPlan(planId, msg.sender),"User not subscribed to plan");
+        require(isSubscribedToPlan(planId, msg.sender), "User not subscribed to plan");
         subscriptionStatuses[msg.sender][planId].isActive = false;
         emit PlanUnsubscribed(planId, msg.sender);
     }
@@ -257,39 +278,50 @@ contract SubscriptionManagerPlugin is BasePlugin {
 
     //called direectly in runtime
     function charge(uint256 planId, address subscriber) public planNotDeleted(planId) {
-         require(isSubscribedToPlan(planId, msg.sender),"User not subscribed to plan");
+        require(isSubscribedToPlan(planId, msg.sender), "User not subscribed to plan");
         SubscriptionPlan memory plan = subscriptionPlans[planId];
         UserSubscription storage userSubscription = subscriptionStatuses[subscriber][planId];
         require(block.timestamp - userSubscription.lastChargeDate >= plan.chargeInterval, "time Interval not met");
         require(userSubscription.startTime <= block.timestamp, "subscription is yet to start");
         require(userSubscription.endTime >= block.timestamp, "subscription has ended");
         userSubscription.lastChargeDate = block.timestamp;
-        uint256 val=0;
-        if(plan.tokenAddress==userSubscription.paymentToken){
-           //execute transfer to this contract with session key
-        bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), plan.price));
-        //use UserOperation signed by external signer
-        IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, callData);
-        }else{
-          address tokenA=plan.tokenAddress;
-          address tokenB=userSubscription.paymentToken;
-          uint256 tokenBalance;
-          if(plan.tokenAddress==address(0)){
-               tokenA=WETH;
-               tokenBalance=address(subscriber).balance;
-               val=tokenBalance;
-          }else{
-               tokenBalance=IERC20(plan.tokenAddress).balanceOf(subscriber);  
-          }
-          if(userSubscription.paymentToken==address(0)){
-               tokenB=WETH;
-          }
-           bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance));//try to swap with all of balance first
-           //use UserOperation signed by external signer
-           IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
-           bytes memory callData=getSwapCallData(tokenA, plan.tokenAddress, userSubscription.paymentTokenSwapFee ,address(this), plan.price, tokenBalance);
-           bytes memory returnData= IPluginExecutor(subscriber).executeFromPluginExternal(address(swapRouter), val, callData);
-           val=abi.decode(returnData,(uint256));
+        uint256 val = 0;
+        if (plan.tokenAddress == userSubscription.paymentToken) {
+            //execute transfer to this contract with session key
+            bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), plan.price));
+            //use UserOperation signed by external signer
+            IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, callData);
+        } else {
+            address tokenA = plan.tokenAddress;
+            address tokenB = userSubscription.paymentToken;
+            uint256 tokenBalance;
+            if (plan.tokenAddress == address(0)) {
+                tokenA = WETH;
+                tokenBalance = address(subscriber).balance;
+                val = tokenBalance;
+            } else {
+                tokenBalance = IERC20(plan.tokenAddress).balanceOf(subscriber);
+            }
+            if (userSubscription.paymentToken == address(0)) {
+                tokenB = WETH;
+            }
+            bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance)); //try to swap with all of balance first
+            //use UserOperation signed by external signer
+            IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
+            bytes memory callData = getSwapCallData(
+                tokenA,
+                plan.tokenAddress,
+                userSubscription.paymentTokenSwapFee,
+                address(this),
+                plan.price,
+                tokenBalance
+            );
+            bytes memory returnData = IPluginExecutor(subscriber).executeFromPluginExternal(
+                address(swapRouter),
+                val,
+                callData
+            );
+            val = abi.decode(returnData, (uint256));
         }
         if (plan.receiveChainId == currentChainId) {
             IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
@@ -297,22 +329,28 @@ contract SubscriptionManagerPlugin is BasePlugin {
             //use CCIP for token transfer instead
         }
 
-        emit SubscriptionCharged(planId, subscriber,userSubscription.paymentToken,val);
+        emit SubscriptionCharged(planId, subscriber, userSubscription.paymentToken, val);
     }
 
-
-     function getSwapCallData(address _tokenIn, address _tokenOut,uint24 fee ,address _recipient, uint256 amountOut,uint256 amountInMax) view internal returns (bytes memory callData) {
-            ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
-                tokenIn: _tokenIn,
-                tokenOut: _tokenOut,
-                fee:fee,
-                recipient: _recipient,
-                deadline: block.timestamp+3,
-                amountInMaximum: amountInMax,
-                amountOut: amountOut,
-                limitSqrtPrice: 0
-            });
-            return abi.encodeCall(ISwapRouter.exactOutputSingle, (params));//try to swap with all of balance first
+    function getSwapCallData(
+        address _tokenIn,
+        address _tokenOut,
+        uint24 fee,
+        address _recipient,
+        uint256 amountOut,
+        uint256 amountInMax
+    ) internal view returns (bytes memory callData) {
+        ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
+            tokenIn: _tokenIn,
+            tokenOut: _tokenOut,
+            fee: fee,
+            recipient: _recipient,
+            deadline: block.timestamp + 3,
+            amountInMaximum: amountInMax,
+            amountOut: amountOut,
+            limitSqrtPrice: 0
+        });
+        return abi.encodeCall(ISwapRouter.exactOutputSingle, (params)); //try to swap with all of balance first
     }
 
     // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -369,7 +407,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
             associatedFunction: ownerUserOpValidationFunction
         });
 
-       manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
+        manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
             executionSelector: this.changeSubscriptionPlanPaymentInfo.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
@@ -395,7 +433,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
             })
         });
 
-          manifest.preRuntimeValidationHooks[1] = ManifestAssociatedFunction({
+        manifest.preRuntimeValidationHooks[1] = ManifestAssociatedFunction({
             executionSelector: this.changeSubscriptionPlanPaymentInfo.selector,
             associatedFunction: ManifestFunction({
                 functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
