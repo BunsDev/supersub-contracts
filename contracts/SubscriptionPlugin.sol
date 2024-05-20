@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import { BasePlugin } from "./BasePlugin.sol";
+import { BasePlugin } from "./libraries/BasePlugin.sol";
 import { IPluginExecutor } from "./interfaces/IPluginExecutor.sol";
 import { IERC20 } from "./interfaces/IERC20.sol";
 import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "./interfaces/IPlugin.sol";
+
 
 contract SubscriptionPlugin is BasePlugin {
     string public constant NAME = "Subscription Plugin";
@@ -40,14 +41,14 @@ contract SubscriptionPlugin is BasePlugin {
         bool isActive;
     }
 
-    uint8 currentChainId;
+    uint8 public currentChainId;
     address public admin;
     mapping(address => bool) public supportedTokens;
-    mapping(address => uint256) productNonces;
-    mapping(address => uint256) subscriptionNonces;
-    mapping(address => mapping(bytes32 => Product)) providerProducts;
-    mapping(address => mapping(bytes32 => Plan)) providerPlans;
-    mapping(address => mapping(bytes32 => UserSubscription)) userSubscriptions;
+    mapping(address => uint256) public productNonces;
+    mapping(address => uint256) public subscriptionNonces;
+    mapping(address => mapping(bytes32 => Product)) public providerProducts;
+    mapping(address => mapping(bytes32 => Plan)) public providerPlans;
+    mapping(address => mapping(bytes32 => UserSubscription)) public userSubscriptions;
 
     event ProductCreated(
         bytes32 indexed productId,
@@ -73,7 +74,7 @@ contract SubscriptionPlugin is BasePlugin {
     );
     event PlanUpdated(bytes32 indexed planId, uint256 price, uint256 chargeInterval, bool isActive);
     event Subscribed(
-        address indexed user,
+        address indexed subscriber,
         address provider,
         bytes32 indexed product,
         bytes32 indexed plan,
@@ -81,7 +82,12 @@ contract SubscriptionPlugin is BasePlugin {
     );
     event UnSubscribed(address indexed user, bytes32 subscriptionId);
     event SubscriptionPlanChanged(address indexed user, bytes32 subscriptionId, bytes32 planId);
-    event SubscriptionCharged(address indexed subscriber, bytes32 subscriptionId, bytes32 indexed planId, uint256 amount);
+    event SubscriptionCharged(
+        address indexed subscriber,
+        bytes32 subscriptionId,
+        bytes32 indexed planId,
+        uint256 amount
+    );
 
     constructor(uint8 chainId, address[] memory _supportedTokens) {
         admin = msg.sender;
@@ -101,37 +107,32 @@ contract SubscriptionPlugin is BasePlugin {
     }
 
     modifier productExists(bytes32 productId, address provider) {
-        require(providerProducts[provider][productId].chargeToken != address(0));
+        require(providerProducts[provider][productId].chargeToken != address(0), "Product Not Found");
         _;
     }
 
     modifier planExists(bytes32 planId, address provider) {
-        require(providerPlans[provider][planId].provider != address(0));
+        require(providerPlans[provider][planId].provider != address(0), "Plan Not Found");
         _;
     }
 
     modifier isActiveProduct(bytes32 productId, address provider) {
-        require(providerProducts[provider][productId].isActive);
+        require(providerProducts[provider][productId].isActive, "Product is inactive");
         _;
     }
 
     modifier isActivePlan(bytes32 planId, address provider) {
-        require(providerPlans[provider][planId].isActive);
-        _;
-    }
-
-    modifier isValidERC20(address addr) {
-        require(validateERC20(addr));
+        require(providerPlans[provider][planId].isActive, "Plan is inactive");
         _;
     }
 
     modifier isSupportedToken(address addr) {
-        require(supportedTokens[addr]);
+        require(supportedTokens[addr], "Token not supported");
         _;
     }
 
     modifier isActiveSubscription(address subscriber, bytes32 subscriptionId) {
-        require(userSubscriptions[subscriber][subscriptionId].isActive);
+        require(userSubscriptions[subscriber][subscriptionId].isActive, "Subscription not active");
         _;
     }
 
@@ -144,7 +145,7 @@ contract SubscriptionPlugin is BasePlugin {
         address _chargeToken,
         address _receivingAddress,
         uint8 _destinationChain
-    ) public isValidERC20(_chargeToken) isSupportedToken(_chargeToken) {
+    ) public isSupportedToken(_chargeToken) {
         Product memory product = Product({
             name: _name,
             productId: bytes32(uint256(productNonces[msg.sender])),
@@ -192,7 +193,7 @@ contract SubscriptionPlugin is BasePlugin {
         address _receivingAddr,
         uint8 _destChain,
         bool _isActive
-    ) public productExists(_productId, msg.sender) isValidERC20(_chargeToken) isSupportedToken(_chargeToken) {
+    ) public productExists(_productId, msg.sender) isSupportedToken(_chargeToken) {
         Product storage product = providerProducts[msg.sender][_productId];
         product.chargeToken = _chargeToken;
         product.receivingAddress = _receivingAddr;
@@ -268,7 +269,7 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 planId,
         bytes32 subscriptionId,
         address provider
-    ) isActiveProduct(productId, provider) isActivePlan(planId, provider) public {
+    ) public isActiveProduct(productId, provider) isActivePlan(planId, provider) {
         UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         Plan memory plan = providerPlans[provider][planId];
         if (subscription.provider != provider) {
@@ -301,9 +302,9 @@ contract SubscriptionPlugin is BasePlugin {
 
     function executeTransfer(
         uint256 amount,
-        address subscriber, 
+        address subscriber,
         address chargeToken,
-        address receivingAddress, 
+        address receivingAddress,
         uint8 destinationChain
     ) internal {
         bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), amount));
@@ -312,14 +313,21 @@ contract SubscriptionPlugin is BasePlugin {
             IERC20(chargeToken).transfer(receivingAddress, amount);
         } else {
             //use CCIP for token transfer instead
-        }   
+        }
     }
 
     function charge(
-        bytes32 planId, address provider, 
-        bytes32 productId, address subscriber, 
+        bytes32 planId,
+        address provider,
+        bytes32 productId,
+        address subscriber,
         bytes32 subscriptionId
-    ) public isActivePlan(planId, provider) isActiveProduct(productId, provider) isActiveSubscription(subscriber, subscriptionId) {
+    )
+        public
+        isActivePlan(planId, provider)
+        isActiveProduct(productId, provider)
+        isActiveSubscription(subscriber, subscriptionId)
+    {
         Plan memory plan = providerPlans[provider][planId];
         Product memory product = providerProducts[provider][productId];
         UserSubscription memory userSubscription = userSubscriptions[subscriber][subscriptionId];
@@ -361,7 +369,8 @@ contract SubscriptionPlugin is BasePlugin {
 
         // Specify plugin dependencies
         manifest.dependencyInterfaceIds = new bytes4[](1);
-        manifest.dependencyInterfaceIds[0] = type(IPlugin).interfaceId;
+        manifest.dependencyInterfaceIds[_MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION] = type(IPlugin)
+            .interfaceId;
 
         // Specify execution function that can be called from the SCA
         // SCA can only call subscribe and unsubscribe functions
@@ -453,5 +462,9 @@ contract SubscriptionPlugin is BasePlugin {
         metadata.version = VERSION;
         metadata.author = AUTHOR;
         return metadata;
+    }
+
+    function getManifestHash() public view returns (bytes32) {
+        return keccak256(abi.encode(this.pluginManifest()));
     }
 }

@@ -15,21 +15,29 @@ const config: HardhatUserConfig = {
     enabled: true
   },
 
-  networks:{
- eth: {
-      url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      accounts: [PRIVATE_KEY_1!],
-    },
-    amoy:{
-       url: `https://polygon-amoy.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      accounts: [PRIVATE_KEY_1!],
-    }
-
+  abiExporter: {
+    path: './abis',
+    pretty: true,
   },
+
+  networks:{
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
+    eth: {
+          url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+          accounts: [PRIVATE_KEY_1!],
+        },
+        amoy:{
+          url: `https://polygon-amoy.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+          accounts: [PRIVATE_KEY_1!],
+        }
+
+    },
 
   sourcify: {
     enabled: true,
-  },
+  }
 };
 
 export default config;
