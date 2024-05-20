@@ -41,6 +41,8 @@
   },
   "dependencies": {
     "@account-abstraction/contracts": "0.6.0",
+    "@alchemy/aa-alchemy": "^3.14.1",
+    "@alchemy/aa-core": "^3.12.3",
     "@openzeppelin/contracts": "4.9.0",
     "ethers": "^6.12.1",
     "modular-account-libs": "github:erc6900/modular-account-libs#v0.7.0",
