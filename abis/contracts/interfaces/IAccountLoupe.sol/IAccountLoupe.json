@@ -1,6 +1,0 @@
-[
-  "function getExecutionFunctionConfig(bytes4) view returns (tuple(address,bytes21,bytes21))",
-  "function getExecutionHooks(bytes4) view returns (tuple(bytes21,bytes21)[])",
-  "function getInstalledPlugins() view returns (address[])",
-  "function getPreValidationHooks(bytes4) view returns (bytes21[], bytes21[])"
-]

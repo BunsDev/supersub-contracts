@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-import { IERC20 } from "./interfaces/IERC20.sol";
-import { BasePlugin } from "./libraries/BasePlugin.sol";
-import { IPluginExecutor } from "./interfaces/IPluginExecutor.sol";
-import { FunctionReference } from "./interfaces/IPluginManager.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
+import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
+import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
+import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "modular-account-libs/interfaces/IPlugin.sol";
+
 import { IUniswapV3Factory } from "./interfaces/IUniswapV3Factory.sol";
 import { ISwapRouter } from "./interfaces/IUniswapV3Router.sol";
-
-import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "./interfaces/IPlugin.sol";
-import { IMultiOwnerPlugin } from "./interfaces/IMultiOwnerPlugin.sol";
 
 /// @title Counter Plugin
 /// @author Your name

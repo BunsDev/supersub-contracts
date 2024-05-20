@@ -1,0 +1,3 @@
+modular-account-libs/=node_modules/modular-account-libs/src/
+@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
+@eth-infinitism/account-abstraction/=node_modules/accountabstraction/contracts/

@@ -1,6 +1,0 @@
-[
-  "event PluginInstalled(address indexed,bytes32,bytes21[])",
-  "event PluginUninstalled(address indexed,bool indexed)",
-  "function installPlugin(address,bytes32,bytes,bytes21[])",
-  "function uninstallPlugin(address,bytes,bytes)"
-]

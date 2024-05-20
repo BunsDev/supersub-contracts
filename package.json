@@ -4,14 +4,16 @@
   "description": "",
   "private": true,
   "scripts": {
+    "deploy:subscriptionPlugin": "hardhat ignition deploy ./ignition/modules/SubscriptionPlugin.ts --network polygonAmoy",
     "format": "prettier --write --plugin=prettier-plugin-solidity .",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix --noPrompt",
+    "deploy": "npx hardhat run --network amoy scripts/deploy.ts",
     "lint": "solhint 'contracts/**/*.sol'",
+    "dev": "npx ts-node scripts/main.ts",
+    "export-abi": "hardhat export-abi",
     "build": "hardhat compile",
     "test": "hardhat test",
-    "prepare": "husky",
-    "dev": "npx ts-node scripts/main.ts",
-    "deploy": "npx hardhat run --network amoy scripts/deploy.ts"
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "@nomicfoundation/hardhat-ignition": "^0.15.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
@@ -44,6 +47,7 @@
     "@alchemy/aa-alchemy": "^3.14.1",
     "@alchemy/aa-core": "^3.12.3",
     "@openzeppelin/contracts": "4.9.0",
+    "accountabstraction": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ethers": "^6.12.1",
     "modular-account-libs": "github:erc6900/modular-account-libs#v0.7.0",
     "solc": "^0.8.25"

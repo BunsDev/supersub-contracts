@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import { BasePlugin } from "./libraries/BasePlugin.sol";
-import { IPluginExecutor } from "./interfaces/IPluginExecutor.sol";
-import { IERC20 } from "./interfaces/IERC20.sol";
-import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "./interfaces/IPlugin.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
+import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
+import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "modular-account-libs/interfaces/IPlugin.sol";
 
 contract SubscriptionPlugin is BasePlugin {
     string public constant NAME = "Subscription Plugin";

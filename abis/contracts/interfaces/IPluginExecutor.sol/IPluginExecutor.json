@@ -1,4 +1,0 @@
-[
-  "function executeFromPlugin(bytes) payable returns (bytes)",
-  "function executeFromPluginExternal(address,uint256,bytes) payable returns (bytes)"
-]
