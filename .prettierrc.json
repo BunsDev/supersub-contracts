@@ -10,6 +10,7 @@
       "options": {
         "parser": "solidity-parse",
         "tabWidth": 4,
+        "printWidth": 120,
         "useTabs": false,
         "singleQuote": false,
         "bracketSpacing": true

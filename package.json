@@ -5,10 +5,11 @@
   "private": true,
   "scripts": {
     "deploy:subscriptionPlugin": "hardhat ignition deploy ./ignition/modules/SubscriptionPlugin.ts --network polygonAmoy",
+    "lint:fix": "solhint 'contracts/SubscriptionManager.sol' 'contracts/SubscriptionPlugin.sol' --fix --noPrompt",
+    "coverage": "hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"test/**/*.ts\"",
+    "lint": "solhint 'contracts/SubscriptionManager.sol' 'contracts/SubscriptionPlugin.sol'",
     "format": "prettier --write --plugin=prettier-plugin-solidity .",
-    "lint:fix": "solhint 'contracts/**/*.sol' --fix --noPrompt",
     "deploy": "npx hardhat run --network amoy scripts/deploy.ts",
-    "lint": "solhint 'contracts/**/*.sol'",
     "dev": "npx ts-node scripts/main.ts",
     "export-abi": "hardhat export-abi",
     "build": "hardhat compile",
@@ -39,17 +40,16 @@
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
     "solhint": "^5.0.1",
-    "solidity-coverage": "^0.8.0",
+    "solidity-coverage": "^0.8.12",
     "typescript": "~5.0.4"
   },
   "dependencies": {
-    "@account-abstraction/contracts": "0.6.0",
+    "accountabstraction": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "modular-account-libs": "github:erc6900/modular-account-libs#v0.7.0",
+    "@openzeppelin/contracts": "4.9.0",
     "@alchemy/aa-alchemy": "^3.14.1",
     "@alchemy/aa-core": "^3.12.3",
-    "@openzeppelin/contracts": "4.9.0",
-    "accountabstraction": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ethers": "^6.12.1",
-    "modular-account-libs": "github:erc6900/modular-account-libs#v0.7.0",
     "solc": "^0.8.25"
   }
 }

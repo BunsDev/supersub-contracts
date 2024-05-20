@@ -5,6 +5,7 @@ import '@nomicfoundation/hardhat-foundry';
 import '@nomicfoundation/hardhat-verify';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
+import 'solidity-coverage';
 import 'dotenv/config';
 
 const config: HardhatUserConfig = {
