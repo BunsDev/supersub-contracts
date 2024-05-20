@@ -1,24 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
-import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import {UserOperation} from "../../interfaces/UserOperation.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { IERC1271 } from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import { UserOperation } from "../../interfaces/UserOperation.sol";
 
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {IPluginManager} from "../../interfaces/IPluginManager.sol";
-import {
-    ManifestFunction,
-    ManifestAssociatedFunctionType,
-    ManifestAssociatedFunction,
-    PluginManifest,
-    PluginMetadata,
-    SelectorPermission
-} from "../../interfaces/IPlugin.sol";
-import {IStandardExecutor} from "../../interfaces/IStandardExecutor.sol";
-import {BasePlugin} from "../../libraries/BasePlugin.sol";
-import {ISingleOwnerPlugin} from "../../interfaces/ISingleOwnerPlugin.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import { IPluginManager } from "../../interfaces/IPluginManager.sol";
+import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, SelectorPermission } from "../../interfaces/IPlugin.sol";
+import { IStandardExecutor } from "../../interfaces/IStandardExecutor.sol";
+import { BasePlugin } from "../../libraries/BasePlugin.sol";
+import { ISingleOwnerPlugin } from "../../interfaces/ISingleOwnerPlugin.sol";
 
 import "hardhat/console.sol";
 
@@ -105,11 +98,12 @@ contract SingleOwnerPlugin is BasePlugin, ISingleOwnerPlugin, IERC1271 {
     }
 
     /// @inheritdoc BasePlugin
-    function runtimeValidationFunction(uint8 functionId, address sender, uint256, bytes calldata)
-        external
-        view
-        override
-    {
+    function runtimeValidationFunction(
+        uint8 functionId,
+        address sender,
+        uint256,
+        bytes calldata
+    ) external view override {
         if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_OWNER_OR_SELF)) {
             // Validate that the sender is the owner of the account or self.
             if (sender != _owners[msg.sender] && sender != msg.sender) {
@@ -121,16 +115,15 @@ contract SingleOwnerPlugin is BasePlugin, ISingleOwnerPlugin, IERC1271 {
     }
 
     /// @inheritdoc BasePlugin
-    function userOpValidationFunction(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function userOpValidationFunction(
+        uint8 functionId,
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) external view override returns (uint256) {
         //console.log('Executing User Op Validation Function for Single Owner Plugin');
         if (functionId == uint8(FunctionId.USER_OP_VALIDATION_OWNER)) {
             // Validate the user op signature against the owner.
-            (address signer,) = (userOpHash.toEthSignedMessageHash()).tryRecover(userOp.signature);
+            (address signer, ) = (userOpHash.toEthSignedMessageHash()).tryRecover(userOp.signature);
             //console.log("This is the signer %s", signer);
             if (signer == address(0) || signer != _owners[msg.sender]) {
                 return _SIG_VALIDATION_FAILED;
@@ -258,7 +251,7 @@ contract SingleOwnerPlugin is BasePlugin, ISingleOwnerPlugin, IERC1271 {
     function getManifestHash() public view returns (bytes32) {
         return keccak256(abi.encode(this.pluginManifest()));
     }
-    
+
     // ┏━━━━━━━━━━━━━━━┓
     // ┃    EIP-165    ┃
     // ┗━━━━━━━━━━━━━━━┛

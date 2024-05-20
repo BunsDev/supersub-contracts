@@ -2,10 +2,10 @@
 pragma solidity ^0.8.19;
 
 // solhint-disable-next-line private-vars-leading-underscore
-function _coalescePreValidation(uint256 validationData1, uint256 validationData2)
-    pure
-    returns (uint256 resValidationData)
-{
+function _coalescePreValidation(
+    uint256 validationData1,
+    uint256 validationData2
+) pure returns (uint256 resValidationData) {
     uint48 validUntil1 = uint48(validationData1 >> 160);
     if (validUntil1 == 0) {
         validUntil1 = type(uint48).max;
@@ -26,10 +26,10 @@ function _coalescePreValidation(uint256 validationData1, uint256 validationData2
 }
 
 // solhint-disable-next-line private-vars-leading-underscore
-function _coalesceValidation(uint256 preValidationData, uint256 validationData)
-    pure
-    returns (uint256 resValidationData)
-{
+function _coalesceValidation(
+    uint256 preValidationData,
+    uint256 validationData
+) pure returns (uint256 resValidationData) {
     uint48 validUntil1 = uint48(preValidationData >> 160);
     if (validUntil1 == 0) {
         validUntil1 = type(uint48).max;

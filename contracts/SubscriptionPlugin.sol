@@ -6,7 +6,6 @@ import { IPluginExecutor } from "./interfaces/IPluginExecutor.sol";
 import { IERC20 } from "./interfaces/IERC20.sol";
 import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "./interfaces/IPlugin.sol";
 
-
 contract SubscriptionPlugin is BasePlugin {
     string public constant NAME = "Subscription Plugin";
     string public constant VERSION = "1.0.0";

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-import {EnumerableMap} from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import {IPlugin} from "./interfaces/IPlugin.sol";
-import {FunctionReference} from "../../interfaces/IPluginManager.sol";
+import { IPlugin } from "./interfaces/IPlugin.sol";
+import { FunctionReference } from "../../interfaces/IPluginManager.sol";
 
 // bytes = keccak256("ERC6900.UpgradeableModularAccount.Storage")
 bytes32 constant _ACCOUNT_STORAGE_SLOT = 0x9f09680beaa4e5c9f38841db2460c401499164f368baef687948c315d9073e40;
@@ -83,14 +83,13 @@ function getPermittedCallKey(address addr, bytes4 selector) pure returns (bytes2
 // Helper function to get all elements of a set into memory.
 using EnumerableMap for EnumerableMap.Bytes32ToUintMap;
 
-function toFunctionReferenceArray(EnumerableMap.Bytes32ToUintMap storage map)
-    view
-    returns (FunctionReference[] memory)
-{
+function toFunctionReferenceArray(
+    EnumerableMap.Bytes32ToUintMap storage map
+) view returns (FunctionReference[] memory) {
     uint256 length = map.length();
     FunctionReference[] memory result = new FunctionReference[](length);
-    for (uint256 i = 0; i < length;) {
-        (bytes32 key,) = map.at(i);
+    for (uint256 i = 0; i < length; ) {
+        (bytes32 key, ) = map.at(i);
         result[i] = FunctionReference.wrap(bytes21(key));
 
         unchecked {

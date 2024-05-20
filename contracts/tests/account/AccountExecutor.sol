@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {IPlugin} from "./interfaces/IPlugin.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import { IPlugin } from "./interfaces/IPlugin.sol";
 
 abstract contract AccountExecutor {
     error PluginExecutionDenied(address plugin);
@@ -21,7 +21,7 @@ abstract contract AccountExecutor {
         }
 
         bool success;
-        (success, result) = target.call{value: value}(data);
+        (success, result) = target.call{ value: value }(data);
 
         if (!success) {
             // Directly bubble up revert messages
