@@ -30,8 +30,31 @@ export class Subscription {
     return this.contract.interface.encodeFunctionResult('pluginManifest', [manifest]) as Address;
   }
 
-  async encodeSubscribeFunctionParamas(planId: number, duration: number) {
-    return this.contract.interface.encodeFunctionData('subscribe', [planId, duration]);
+  async encodeSubscribeFunctionParamas(
+    planId: number,
+    duration: number,
+    paymentToken: string,
+    paymentTokenSwapFee: number
+  ) {
+    return this.contract.interface.encodeFunctionData('subscribe', [
+      planId,
+      duration,
+      paymentToken,
+      paymentTokenSwapFee,
+    ]);
+  }
+
+  async encodechangeSubscriptionPlanPaymentInfoParams(
+    planId: number,
+    endTime: number,
+    paymentToken: string,
+    paymentTokenSwapFee: number
+  ) {
+    return this.contract.interface.encodeFunctionData('changeSubscriptionPlanPaymentInfo', [
+      planId,
+      endTime,
+      paymentToken,
+    ]);
   }
 
   async encodeUnsubscribeFunctionParamas(planId: number) {
@@ -79,17 +102,28 @@ export class Subscription {
     return await this.contract.subscriptionStatuses(subscriber, planId);
   }
 
-  async createPlan() {
-    const price = 100000;
-    const chargeInterval = 24 * 3600 * 30;
-    const tokenAddr = '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582';
-    const txn = await this.addSubscriptionSupportedToken(tokenAddr);
+  async createPlan(
+    price?: number,
+    chargeInterval?: number,
+    planPaymentToken?: string,
+    receivingAddress?: string,
+    receiveChainId?: number
+  ) {
+    const txn = await this.addSubscriptionSupportedToken(
+      planPaymentToken || '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582'
+    );
     await txn.wait();
     const provider = new AlchemyProvider(this.chain, ALCHEMY_API_KEY);
     const signer = new Wallet(PRIVATE_KEY_2!, provider);
     const newContract = this.contract.connect(signer);
     //@ts-ignore
-    const txn2 = await newContract.createSubscriptionPlan(price, chargeInterval, tokenAddr, signer.address, 4);
+    const txn2 = await newContract.createSubscriptionPlan(
+      price || 100000,
+      chargeInterval || 24 * 3600 * 30,
+      planPaymentToken || '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582',
+      receivingAddress || signer.address,
+      receiveChainId || 4
+    );
     await txn2.wait();
   }
 }

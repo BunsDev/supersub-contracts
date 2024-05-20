@@ -53,8 +53,24 @@ export class UserAccount {
     return false;
   }
 
-  async subscribe(subscriptionManagerPlugin: Subscription, planId: number, duration: number) {
-    const subscribeParams = (await subscriptionManagerPlugin.encodeSubscribeFunctionParamas(planId, duration)) as any;
+  async subscribe(
+    subscriptionManagerPlugin: Subscription,
+    planId: number,
+    duration: number,
+    paymentToken?: string,
+    paymentTokenSwapFee: number = 0
+  ) {
+    const subscriptionPlan = await subscriptionManagerPlugin.getSubscriptionById(planId);
+    if (!paymentToken) {
+      paymentToken = subscriptionPlan[3];
+      console.log(subscriptionPlan, paymentToken);
+    }
+    const subscribeParams = (await subscriptionManagerPlugin.encodeSubscribeFunctionParamas(
+      planId,
+      duration,
+      paymentToken!,
+      paymentTokenSwapFee
+    )) as any;
     const accountClient = await this.initializeAccountClient();
     const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
     console.log('Subscription Plugin installation status: ', isPluginInstalled);
@@ -64,7 +80,36 @@ export class UserAccount {
     }
     console.log('subscribe params', subscribeParams);
     const userOp = await accountClient.sendUserOperation({ uo: subscribeParams });
-    console.log(userOp);
+    const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    console.log(hash, 'Subscription txn gone');
+  }
+
+  async changeSubscriptionPlanPaymentInfo(
+    subscriptionManagerPlugin: Subscription,
+    planId: number,
+    endTime: number,
+    paymentToken?: string,
+    paymentTokenSwapFee: number = 0
+  ) {
+    const subscriptionPlan = await subscriptionManagerPlugin.getSubscriptionById(planId);
+    if (!paymentToken) {
+      paymentToken = subscriptionPlan[3];
+    }
+    const subscribeParams = (await subscriptionManagerPlugin.encodechangeSubscriptionPlanPaymentInfoParams(
+      planId,
+      endTime,
+      paymentToken!,
+      paymentTokenSwapFee
+    )) as any;
+    const accountClient = await this.initializeAccountClient();
+    const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
+    console.log('Subscription Plugin installation status: ', isPluginInstalled);
+    if (!isPluginInstalled) {
+      await this.installSubscriptionPlugin(subscriptionManagerPlugin);
+      console.log('Installed subscription Plugin');
+    }
+    console.log('subscribe params', subscribeParams);
+    const userOp = await accountClient.sendUserOperation({ uo: subscribeParams });
     const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
     console.log(hash, 'Subscription txn gone');
   }

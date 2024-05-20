@@ -253,13 +253,28 @@ contract SubscriptionManagerPlugin is BasePlugin {
     function changeSubscriptionPlanPaymentInfo(
         uint256 planId,
         uint256 endTime,
-        address paymentToken
+        address paymentToken,
+        uint24 paymentTokenSwapFee
     ) public planNotDeleted(planId) {
         require(isSubscribedToPlan(planId, msg.sender), "User not subscribed to plan");
         require(endTime > block.timestamp, "Invalid endTime Provided");
+        SubscriptionPlan memory plan = subscriptionPlans[planId];
+        if (plan.tokenAddress != paymentToken) {
+            address tokenA = plan.tokenAddress;
+            address tokenB = paymentToken;
+            if (plan.tokenAddress == address(0)) {
+                tokenA = WETH;
+            }
+            if (paymentToken == address(0)) {
+                tokenB = WETH;
+            }
+            address poolAddr = swapFactory.getPool(tokenA, tokenB, paymentTokenSwapFee);
+            require(poolAddr != address(0), "Pool does not exist for specified pool");
+        }
         UserSubscription storage userSubscription = subscriptionStatuses[msg.sender][planId];
         userSubscription.paymentToken = paymentToken;
         userSubscription.endTime = endTime;
+        userSubscription.paymentTokenSwapFee = paymentTokenSwapFee;
         emit PlanSubscriptionChanged(planId, msg.sender, paymentToken, endTime);
     }
 
@@ -278,7 +293,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
 
     //called direectly in runtime
     function charge(uint256 planId, address subscriber) public planNotDeleted(planId) {
-        require(isSubscribedToPlan(planId, msg.sender), "User not subscribed to plan");
+        require(isSubscribedToPlan(planId, subscriber), "User not subscribed to plan");
         SubscriptionPlan memory plan = subscriptionPlans[planId];
         UserSubscription storage userSubscription = subscriptionStatuses[subscriber][planId];
         require(block.timestamp - userSubscription.lastChargeDate >= plan.chargeInterval, "time Interval not met");
@@ -306,7 +321,6 @@ contract SubscriptionManagerPlugin is BasePlugin {
                 tokenB = WETH;
             }
             bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance)); //try to swap with all of balance first
-            //use UserOperation signed by external signer
             IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
             bytes memory callData = getSwapCallData(
                 tokenA,
@@ -322,6 +336,8 @@ contract SubscriptionManagerPlugin is BasePlugin {
                 callData
             );
             val = abi.decode(returnData, (uint256));
+            approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), 0)); //set approval back to 0
+            IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
         }
         if (plan.receiveChainId == currentChainId) {
             IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
@@ -396,7 +412,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
         // here we will link together the increment function with the single owner user op validation
         // this basically says "use this user op validation function and make sure everythings okay before calling increment"
         // this will ensure that only an owner of the account can call increment
-        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](2);
+        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](3);
         manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
             executionSelector: this.subscribe.selector,
             associatedFunction: ownerUserOpValidationFunction
@@ -415,7 +431,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
         // finally here we will always deny runtime calls to the increment function as we will only call it through user ops
         // this avoids a potential issue where a future plugin may define
         // a runtime validation function for it and unauthorized calls may occur due to that
-        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](2);
+        manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](3);
         manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
             executionSelector: this.subscribe.selector,
             associatedFunction: ManifestFunction({
@@ -433,7 +449,7 @@ contract SubscriptionManagerPlugin is BasePlugin {
             })
         });
 
-        manifest.preRuntimeValidationHooks[1] = ManifestAssociatedFunction({
+        manifest.preRuntimeValidationHooks[2] = ManifestAssociatedFunction({
             executionSelector: this.changeSubscriptionPlanPaymentInfo.selector,
             associatedFunction: ManifestFunction({
                 functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
