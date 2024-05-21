@@ -273,7 +273,12 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 planId,
         bytes32 subscriptionId,
         address provider
-    ) public isActiveProduct(productId, provider) isActivePlan(planId, provider) subscriptionExists(msg.sender, subscriptionId) {
+    )
+        public
+        isActiveProduct(productId, provider)
+        isActivePlan(planId, provider)
+        subscriptionExists(msg.sender, subscriptionId)
+    {
         UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         Plan memory plan = providerPlans[provider][planId];
         if (subscription.provider != provider) {

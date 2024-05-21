@@ -443,7 +443,7 @@ describe('Subscription Plugin Tests', function () {
       const createProductSig = await mscaOwner.signMessage(hre.ethers.getBytes(createProductUserOpHash));
       createProductUserOp.signature = createProductSig;
       await entrypoint.handleOps([createProductUserOp], beneficiary.address);
-      
+
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Create Plan            ┃
       // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -528,11 +528,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 3,
         initCode: '0x',
-        callData: getCallData(
-          'unSubscribe(bytes32)',
-          ['bytes32'],
-          [hre.ethers.toBeHex(0, 32)]
-        ),
+        callData: getCallData('unSubscribe(bytes32)', ['bytes32'], [hre.ethers.toBeHex(0, 32)]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -549,10 +545,7 @@ describe('Subscription Plugin Tests', function () {
       expect(sub.isActive).to.equal(false);
       await expect(unSubscribeTxn)
         .to.emit(subscriptionPlugin, 'UnSubscribed')
-        .withArgs(
-          expectedSubscriber,
-          expectedSubId
-        );
+        .withArgs(expectedSubscriber, expectedSubId);
 
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃   Change Plan             ┃
@@ -588,7 +581,12 @@ describe('Subscription Plugin Tests', function () {
         callData: getCallData(
           'changeSubscriptionPlan(bytes32,bytes32,bytes32,address)',
           ['bytes32', 'bytes32', 'bytes32', 'address'],
-          [hre.ethers.toBeHex(0, 32), hre.ethers.toBeHex(1, 32), hre.ethers.toBeHex(0, 32), await mscaAccount.getAddress()]
+          [
+            hre.ethers.toBeHex(0, 32),
+            hre.ethers.toBeHex(1, 32),
+            hre.ethers.toBeHex(0, 32),
+            await mscaAccount.getAddress(),
+          ]
         ),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
@@ -607,11 +605,7 @@ describe('Subscription Plugin Tests', function () {
       expect(changedSub.plan).to.equal(hre.ethers.toBeHex(1, 32));
       await expect(changeSubTxn)
         .to.emit(subscriptionPlugin, 'SubscriptionPlanChanged')
-        .withArgs(
-          expectedSubscriber,
-          hre.ethers.toBeHex(0, 32),
-          hre.ethers.toBeHex(1, 32)
-        );
+        .withArgs(expectedSubscriber, hre.ethers.toBeHex(0, 32), hre.ethers.toBeHex(1, 32));
     });
     it('Charge Failure Tests', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
@@ -705,11 +699,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 1,
         initCode: '0x',
-        callData: getCallData(
-          'unSubscribe(bytes32)',
-          ['bytes32'],
-          [hre.ethers.toBeHex(0, 32)]
-        ),
+        callData: getCallData('unSubscribe(bytes32)', ['bytes32'], [hre.ethers.toBeHex(0, 32)]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -732,7 +722,7 @@ describe('Subscription Plugin Tests', function () {
         )
       ).to.revertedWith('Subscription not active');
     });
-    it("Charge Success Test", async () => {
+    it('Charge Success Test', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
 
       // Transfer tokens to the msca account
@@ -784,7 +774,10 @@ describe('Subscription Plugin Tests', function () {
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Charge Test [Success]  ┃
       // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-      const beforeChargeUserSub = await subscriptionPlugin.userSubscriptions(await mscaAccount.getAddress(), hre.ethers.toBeHex(0, 32));
+      const beforeChargeUserSub = await subscriptionPlugin.userSubscriptions(
+        await mscaAccount.getAddress(),
+        hre.ethers.toBeHex(0, 32)
+      );
       await time.increase(3600);
       const chargeTxn = await subscriptionPlugin.charge(
         hre.ethers.toBeHex(0, 32),
@@ -793,16 +786,16 @@ describe('Subscription Plugin Tests', function () {
         await mscaAccount.getAddress(),
         hre.ethers.toBeHex(0, 32)
       );
-      const afterChargeUserSub = await subscriptionPlugin.userSubscriptions(await mscaAccount.getAddress(), hre.ethers.toBeHex(0, 32));
-      expect(afterChargeUserSub.lastChargeDate).to.greaterThanOrEqual(beforeChargeUserSub.lastChargeDate + BigInt(3600));
+      const afterChargeUserSub = await subscriptionPlugin.userSubscriptions(
+        await mscaAccount.getAddress(),
+        hre.ethers.toBeHex(0, 32)
+      );
+      expect(afterChargeUserSub.lastChargeDate).to.greaterThanOrEqual(
+        beforeChargeUserSub.lastChargeDate + BigInt(3600)
+      );
       await expect(chargeTxn)
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
-        .withArgs(
-          await mscaAccount.getAddress(),
-          hre.ethers.toBeHex(0, 32),
-          hre.ethers.toBeHex(0, 32),
-          price
-        );
+        .withArgs(await mscaAccount.getAddress(), hre.ethers.toBeHex(0, 32), hre.ethers.toBeHex(0, 32), price);
       // Change plan and test charge
       const changeSubUserOp = {
         sender: await mscaAccount.getAddress(),
@@ -835,12 +828,7 @@ describe('Subscription Plugin Tests', function () {
       );
       await expect(chargeTxn2)
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
-        .withArgs(
-          await mscaAccount.getAddress(),
-          hre.ethers.toBeHex(0, 32),
-          hre.ethers.toBeHex(1, 32),
-          price2
-        );
-    })
+        .withArgs(await mscaAccount.getAddress(), hre.ethers.toBeHex(0, 32), hre.ethers.toBeHex(1, 32), price2);
+    });
   });
 });
