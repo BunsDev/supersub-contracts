@@ -76,5 +76,5 @@ async function charge() {
   console.log('Successfully charged subscription');
 }
 
-main();
+// main();
 // charge();

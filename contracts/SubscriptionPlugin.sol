@@ -135,6 +135,11 @@ contract SubscriptionPlugin is BasePlugin {
         _;
     }
 
+    modifier subscriptionExists(address subscriber, bytes32 subscriptionId) {
+        require(userSubscriptions[subscriber][subscriptionId].provider != address(0), "Subscription not found");
+        _;
+    }
+
     // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
     // ┃    Execution functions    ┃
     // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -268,7 +273,7 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 planId,
         bytes32 subscriptionId,
         address provider
-    ) public isActiveProduct(productId, provider) isActivePlan(planId, provider) {
+    ) public isActiveProduct(productId, provider) isActivePlan(planId, provider) subscriptionExists(msg.sender, subscriptionId) {
         UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         Plan memory plan = providerPlans[provider][planId];
         if (subscription.provider != provider) {
@@ -329,10 +334,10 @@ contract SubscriptionPlugin is BasePlugin {
     {
         Plan memory plan = providerPlans[provider][planId];
         Product memory product = providerProducts[provider][productId];
-        UserSubscription memory userSubscription = userSubscriptions[subscriber][subscriptionId];
-
+        UserSubscription storage userSubscription = userSubscriptions[subscriber][subscriptionId];
         require(plan.chargeInterval + userSubscription.lastChargeDate <= block.timestamp, "time Interval not met");
-        userSubscription.lastChargeDate = block.timestamp;
+        require(plan.planId == userSubscription.plan, "Incorrect plan id");
+        require(plan.productId == productId, "Plan does not belong to specified product");
         executeTransfer(
             plan.price,
             subscriber,
@@ -340,6 +345,7 @@ contract SubscriptionPlugin is BasePlugin {
             product.receivingAddress,
             product.destinationChain
         );
+        userSubscription.lastChargeDate = block.timestamp;
         emit SubscriptionCharged(subscriber, subscriptionId, planId, plan.price);
     }
 
