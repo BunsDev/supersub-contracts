@@ -17,7 +17,7 @@ describe('Subscription Plugin Tests', function () {
 
   async function setUp() {
     const val = 80002;
-    console.log(hre.ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [val]));
+    console.log(hre.ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [val]));
     const EntryPointFactory = await hre.ethers.getContractFactory('EntryPoint');
     const TestTokenFactory = await hre.ethers.getContractFactory('TestToken');
     const SubscriptionPluginFactory = await hre.ethers.getContractFactory('SubscriptionPlugin');
@@ -319,11 +319,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 2,
         initCode: '0x',
-        callData: getCallData(
-          'updatePlan(bytes32,bool)',
-          ['bytes32', 'bool'],
-          [expectedPlanId, false]
-        ),
+        callData: getCallData('updatePlan(bytes32,bool)', ['bytes32', 'bool'], [expectedPlanId, false]),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -340,9 +336,7 @@ describe('Subscription Plugin Tests', function () {
       // expect(updatedPlan.price).to.equal(newPrice);
       // expect(updatedPlan.chargeInterval).to.equal(newInterval);
       expect(updatedPlan.isActive).to.equal(false);
-      await expect(updateTxn)
-        .to.emit(subscriptionPlugin, 'PlanUpdated')
-        .withArgs(plan.planId, false);
+      await expect(updateTxn).to.emit(subscriptionPlugin, 'PlanUpdated').withArgs(plan.planId, false);
     });
   });
 

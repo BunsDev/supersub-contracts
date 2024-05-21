@@ -39,16 +39,8 @@
       "evmVersion": "paris",
       "outputSelection": {
         "*": {
-          "*": [
-            "abi",
-            "evm.bytecode",
-            "evm.deployedBytecode",
-            "evm.methodIdentifiers",
-            "metadata"
-          ],
-          "": [
-            "ast"
-          ]
+          "*": ["abi", "evm.bytecode", "evm.deployedBytecode", "evm.methodIdentifiers", "metadata"],
+          "": ["ast"]
         }
       }
     }
@@ -59,9 +51,7 @@
         "ast": {
           "absolutePath": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
           "exportedSymbols": {
-            "IERC20": [
-              77
-            ]
+            "IERC20": [77]
           },
           "id": 78,
           "license": "MIT",
@@ -69,12 +59,7 @@
           "nodes": [
             {
               "id": 1,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".0"
-              ],
+              "literals": ["solidity", "^", "0.8", ".0"],
               "nodeType": "PragmaDirective",
               "src": "106:23:0"
             },
@@ -92,9 +77,7 @@
               },
               "fullyImplemented": false,
               "id": 77,
-              "linearizedBaseContracts": [
-                77
-              ],
+              "linearizedBaseContracts": [77],
               "name": "IERC20",
               "nameLocation": "212:6:0",
               "nodeType": "ContractDefinition",
@@ -967,10 +950,7 @@
               "scope": 78,
               "src": "202:2534:0",
               "usedErrors": [],
-              "usedEvents": [
-                11,
-                20
-              ]
+              "usedEvents": [11, 20]
             }
           ],
           "src": "106:2631:0"
@@ -981,36 +961,16 @@
         "ast": {
           "absolutePath": "contracts/SubscriptionPlugin.sol",
           "exportedSymbols": {
-            "BasePlugin": [
-              2112
-            ],
-            "IERC20": [
-              77
-            ],
-            "IPlugin": [
-              1716
-            ],
-            "IPluginExecutor": [
-              1740
-            ],
-            "ManifestAssociatedFunction": [
-              1540
-            ],
-            "ManifestAssociatedFunctionType": [
-              1525
-            ],
-            "ManifestFunction": [
-              1534
-            ],
-            "PluginManifest": [
-              1616
-            ],
-            "PluginMetadata": [
-              1574
-            ],
-            "SubscriptionPlugin": [
-              1503
-            ]
+            "BasePlugin": [2112],
+            "IERC20": [77],
+            "IPlugin": [1716],
+            "IPluginExecutor": [1740],
+            "ManifestAssociatedFunction": [1540],
+            "ManifestAssociatedFunctionType": [1525],
+            "ManifestFunction": [1534],
+            "PluginManifest": [1616],
+            "PluginMetadata": [1574],
+            "SubscriptionPlugin": [1503]
           },
           "id": 1504,
           "license": "UNLICENSED",
@@ -1018,12 +978,7 @@
           "nodes": [
             {
               "id": 79,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".24"
-              ],
+              "literals": ["solidity", "^", "0.8", ".24"],
               "nodeType": "PragmaDirective",
               "src": "39:24:1"
             },
@@ -1194,9 +1149,7 @@
                   "baseName": {
                     "id": 93,
                     "name": "BasePlugin",
-                    "nameLocations": [
-                      "512:10:1"
-                    ],
+                    "nameLocations": ["512:10:1"],
                     "nodeType": "IdentifierPath",
                     "referencedDeclaration": 2112,
                     "src": "512:10:1"
@@ -1211,13 +1164,7 @@
               "contractKind": "contract",
               "fullyImplemented": true,
               "id": 1503,
-              "linearizedBaseContracts": [
-                1503,
-                2112,
-                1716,
-                2136,
-                1515
-              ],
+              "linearizedBaseContracts": [1503, 2112, 1716, 2136, 1515],
               "name": "SubscriptionPlugin",
               "nameLocation": "490:18:1",
               "nodeType": "ContractDefinition",
@@ -2203,9 +2150,7 @@
                         "pathNode": {
                           "id": 164,
                           "name": "Product",
-                          "nameLocations": [
-                            "1610:7:1"
-                          ],
+                          "nameLocations": ["1610:7:1"],
                           "nodeType": "IdentifierPath",
                           "referencedDeclaration": 123,
                           "src": "1610:7:1"
@@ -2287,9 +2232,7 @@
                         "pathNode": {
                           "id": 171,
                           "name": "Plan",
-                          "nameLocations": [
-                            "1687:4:1"
-                          ],
+                          "nameLocations": ["1687:4:1"],
                           "nodeType": "IdentifierPath",
                           "referencedDeclaration": 136,
                           "src": "1687:4:1"
@@ -2371,9 +2314,7 @@
                         "pathNode": {
                           "id": 178,
                           "name": "UserSubscription",
-                          "nameLocations": [
-                            "1758:16:1"
-                          ],
+                          "nameLocations": ["1758:16:1"],
                           "nodeType": "IdentifierPath",
                           "referencedDeclaration": 149,
                           "src": "1758:16:1"
@@ -3661,10 +3602,7 @@
                             "id": 279,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "3321:7:1",
                             "typeDescriptions": {
@@ -3910,10 +3848,7 @@
                             "id": 294,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "3443:7:1",
                             "typeDescriptions": {
@@ -4215,10 +4150,7 @@
                             "id": 317,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "3624:7:1",
                             "typeDescriptions": {
@@ -4441,10 +4373,7 @@
                             "id": 340,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "3801:7:1",
                             "typeDescriptions": {
@@ -4667,10 +4596,7 @@
                             "id": 358,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "3969:7:1",
                             "typeDescriptions": {
@@ -4893,10 +4819,7 @@
                             "id": 376,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "4146:7:1",
                             "typeDescriptions": {
@@ -5198,10 +5121,7 @@
                             "id": 394,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "4342:7:1",
                             "typeDescriptions": {
@@ -5313,9 +5233,7 @@
                     "src": "4860:707:1",
                     "statements": [
                       {
-                        "assignments": [
-                          424
-                        ],
+                        "assignments": [424],
                         "declarations": [
                           {
                             "constant": false,
@@ -5338,9 +5256,7 @@
                               "pathNode": {
                                 "id": 422,
                                 "name": "Product",
-                                "nameLocations": [
-                                  "4870:7:1"
-                                ],
+                                "nameLocations": ["4870:7:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 123,
                                 "src": "4870:7:1"
@@ -6277,9 +6193,7 @@
                     "src": "5728:546:1",
                     "statements": [
                       {
-                        "assignments": [
-                          495
-                        ],
+                        "assignments": [495],
                         "declarations": [
                           {
                             "constant": false,
@@ -6302,9 +6216,7 @@
                               "pathNode": {
                                 "id": 493,
                                 "name": "Product",
-                                "nameLocations": [
-                                  "5738:7:1"
-                                ],
+                                "nameLocations": ["5738:7:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 123,
                                 "src": "5738:7:1"
@@ -6401,9 +6313,7 @@
                         "src": "5738:66:1"
                       },
                       {
-                        "assignments": [
-                          505
-                        ],
+                        "assignments": [505],
                         "declarations": [
                           {
                             "constant": false,
@@ -6426,9 +6336,7 @@
                               "pathNode": {
                                 "id": 503,
                                 "name": "Plan",
-                                "nameLocations": [
-                                  "5814:4:1"
-                                ],
+                                "nameLocations": ["5814:4:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 136,
                                 "src": "5814:4:1"
@@ -6689,22 +6597,8 @@
                           "isPure": false,
                           "kind": "structConstructorCall",
                           "lValueRequested": false,
-                          "nameLocations": [
-                            "5852:9:1",
-                            "5887:6:1",
-                            "5944:8:1",
-                            "5984:14:1",
-                            "6029:5:1",
-                            "6056:8:1"
-                          ],
-                          "names": [
-                            "productId",
-                            "planId",
-                            "provider",
-                            "chargeInterval",
-                            "price",
-                            "isActive"
-                          ],
+                          "nameLocations": ["5852:9:1", "5887:6:1", "5944:8:1", "5984:14:1", "6029:5:1", "6056:8:1"],
+                          "names": ["productId", "planId", "provider", "chargeInterval", "price", "isActive"],
                           "nodeType": "FunctionCall",
                           "src": "5833:248:1",
                           "tryCall": false,
@@ -7139,9 +7033,7 @@
                       "modifierName": {
                         "id": 487,
                         "name": "productExists",
-                        "nameLocations": [
-                          "5690:13:1"
-                        ],
+                        "nameLocations": ["5690:13:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 311,
                         "src": "5690:13:1"
@@ -7260,9 +7152,7 @@
                     "src": "6496:472:1",
                     "statements": [
                       {
-                        "assignments": [
-                          572
-                        ],
+                        "assignments": [572],
                         "declarations": [
                           {
                             "constant": false,
@@ -7285,9 +7175,7 @@
                               "pathNode": {
                                 "id": 570,
                                 "name": "Product",
-                                "nameLocations": [
-                                  "6506:7:1"
-                                ],
+                                "nameLocations": ["6506:7:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 123,
                                 "src": "6506:7:1"
@@ -7871,9 +7759,7 @@
                       "modifierName": {
                         "id": 564,
                         "name": "productExists",
-                        "nameLocations": [
-                          "6458:13:1"
-                        ],
+                        "nameLocations": ["6458:13:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 311,
                         "src": "6458:13:1"
@@ -8048,9 +7934,7 @@
                     "src": "7088:160:1",
                     "statements": [
                       {
-                        "assignments": [
-                          632
-                        ],
+                        "assignments": [632],
                         "declarations": [
                           {
                             "constant": false,
@@ -8073,9 +7957,7 @@
                               "pathNode": {
                                 "id": 630,
                                 "name": "Plan",
-                                "nameLocations": [
-                                  "7098:4:1"
-                                ],
+                                "nameLocations": ["7098:4:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 136,
                                 "src": "7098:4:1"
@@ -8386,9 +8268,7 @@
                       "modifierName": {
                         "id": 624,
                         "name": "planExists",
-                        "nameLocations": [
-                          "7056:10:1"
-                        ],
+                        "nameLocations": ["7056:10:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 334,
                         "src": "7056:10:1"
@@ -8609,10 +8489,7 @@
                                   "id": 677,
                                   "name": "revert",
                                   "nodeType": "Identifier",
-                                  "overloadedDeclarations": [
-                                    -19,
-                                    -19
-                                  ],
+                                  "overloadedDeclarations": [-19, -19],
                                   "referencedDeclaration": -19,
                                   "src": "7488:6:1",
                                   "typeDescriptions": {
@@ -8762,10 +8639,7 @@
                                   "id": 688,
                                   "name": "revert",
                                   "nodeType": "Identifier",
-                                  "overloadedDeclarations": [
-                                    -19,
-                                    -19
-                                  ],
+                                  "overloadedDeclarations": [-19, -19],
                                   "referencedDeclaration": -19,
                                   "src": "7619:6:1",
                                   "typeDescriptions": {
@@ -8797,9 +8671,7 @@
                         }
                       },
                       {
-                        "assignments": [
-                          696
-                        ],
+                        "assignments": [696],
                         "declarations": [
                           {
                             "constant": false,
@@ -8822,9 +8694,7 @@
                               "pathNode": {
                                 "id": 694,
                                 "name": "Plan",
-                                "nameLocations": [
-                                  "7684:4:1"
-                                ],
+                                "nameLocations": ["7684:4:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 136,
                                 "src": "7684:4:1"
@@ -8906,9 +8776,7 @@
                         "src": "7684:50:1"
                       },
                       {
-                        "assignments": [
-                          705
-                        ],
+                        "assignments": [705],
                         "declarations": [
                           {
                             "constant": false,
@@ -8931,9 +8799,7 @@
                               "pathNode": {
                                 "id": 703,
                                 "name": "Product",
-                                "nameLocations": [
-                                  "7744:7:1"
-                                ],
+                                "nameLocations": ["7744:7:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 123,
                                 "src": "7744:7:1"
@@ -9212,9 +9078,7 @@
                         "src": "7856:182:1"
                       },
                       {
-                        "assignments": [
-                          727
-                        ],
+                        "assignments": [727],
                         "declarations": [
                           {
                             "constant": false,
@@ -9237,9 +9101,7 @@
                               "pathNode": {
                                 "id": 725,
                                 "name": "UserSubscription",
-                                "nameLocations": [
-                                  "8048:16:1"
-                                ],
+                                "nameLocations": ["8048:16:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 149,
                                 "src": "8048:16:1"
@@ -9494,22 +9356,8 @@
                           "isPure": false,
                           "kind": "structConstructorCall",
                           "lValueRequested": false,
-                          "nameLocations": [
-                            "8118:14:1",
-                            "8187:7:1",
-                            "8219:4:1",
-                            "8250:8:1",
-                            "8282:8:1",
-                            "8310:14:1"
-                          ],
-                          "names": [
-                            "subscriptionId",
-                            "product",
-                            "plan",
-                            "provider",
-                            "isActive",
-                            "lastChargeDate"
-                          ],
+                          "nameLocations": ["8118:14:1", "8187:7:1", "8219:4:1", "8250:8:1", "8282:8:1", "8310:14:1"],
+                          "names": ["subscriptionId", "product", "plan", "provider", "isActive", "lastChargeDate"],
                           "nodeType": "FunctionCall",
                           "src": "8087:265:1",
                           "tryCall": false,
@@ -9920,9 +9768,7 @@
                       "modifierName": {
                         "id": 662,
                         "name": "isActiveProduct",
-                        "nameLocations": [
-                          "7363:15:1"
-                        ],
+                        "nameLocations": ["7363:15:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 352,
                         "src": "7363:15:1"
@@ -9962,9 +9808,7 @@
                       "modifierName": {
                         "id": 666,
                         "name": "isActivePlan",
-                        "nameLocations": [
-                          "7400:12:1"
-                        ],
+                        "nameLocations": ["7400:12:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 370,
                         "src": "7400:12:1"
@@ -10359,9 +10203,7 @@
                     "src": "9317:537:1",
                     "statements": [
                       {
-                        "assignments": [
-                          821
-                        ],
+                        "assignments": [821],
                         "declarations": [
                           {
                             "constant": false,
@@ -10384,9 +10226,7 @@
                               "pathNode": {
                                 "id": 819,
                                 "name": "UserSubscription",
-                                "nameLocations": [
-                                  "9327:16:1"
-                                ],
+                                "nameLocations": ["9327:16:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 149,
                                 "src": "9327:16:1"
@@ -10483,9 +10323,7 @@
                         "src": "9327:85:1"
                       },
                       {
-                        "assignments": [
-                          831
-                        ],
+                        "assignments": [831],
                         "declarations": [
                           {
                             "constant": false,
@@ -10508,9 +10346,7 @@
                               "pathNode": {
                                 "id": 829,
                                 "name": "Plan",
-                                "nameLocations": [
-                                  "9422:4:1"
-                                ],
+                                "nameLocations": ["9422:4:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 136,
                                 "src": "9422:4:1"
@@ -10688,10 +10524,7 @@
                                   "id": 842,
                                   "name": "revert",
                                   "nodeType": "Identifier",
-                                  "overloadedDeclarations": [
-                                    -19,
-                                    -19
-                                  ],
+                                  "overloadedDeclarations": [-19, -19],
                                   "referencedDeclaration": -19,
                                   "src": "9535:6:1",
                                   "typeDescriptions": {
@@ -10835,10 +10668,7 @@
                                   "id": 853,
                                   "name": "revert",
                                   "nodeType": "Identifier",
-                                  "overloadedDeclarations": [
-                                    -19,
-                                    -19
-                                  ],
+                                  "overloadedDeclarations": [-19, -19],
                                   "referencedDeclaration": -19,
                                   "src": "9640:6:1",
                                   "typeDescriptions": {
@@ -11131,9 +10961,7 @@
                       "modifierName": {
                         "id": 805,
                         "name": "isActiveProduct",
-                        "nameLocations": [
-                          "9182:15:1"
-                        ],
+                        "nameLocations": ["9182:15:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 352,
                         "src": "9182:15:1"
@@ -11173,9 +11001,7 @@
                       "modifierName": {
                         "id": 809,
                         "name": "isActivePlan",
-                        "nameLocations": [
-                          "9227:12:1"
-                        ],
+                        "nameLocations": ["9227:12:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 370,
                         "src": "9227:12:1"
@@ -11230,9 +11056,7 @@
                       "modifierName": {
                         "id": 813,
                         "name": "subscriptionExists",
-                        "nameLocations": [
-                          "9266:18:1"
-                        ],
+                        "nameLocations": ["9266:18:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 411,
                         "src": "9266:18:1"
@@ -11642,9 +11466,7 @@
                         },
                         "id": 916,
                         "initializationExpression": {
-                          "assignments": [
-                            889
-                          ],
+                          "assignments": [889],
                           "declarations": [
                             {
                               "constant": false,
@@ -11871,9 +11693,7 @@
                     "src": "10384:381:1",
                     "statements": [
                       {
-                        "assignments": [
-                          934
-                        ],
+                        "assignments": [934],
                         "declarations": [
                           {
                             "constant": false,
@@ -12575,9 +12395,7 @@
                     "src": "11090:854:1",
                     "statements": [
                       {
-                        "assignments": [
-                          998
-                        ],
+                        "assignments": [998],
                         "declarations": [
                           {
                             "constant": false,
@@ -12600,9 +12418,7 @@
                               "pathNode": {
                                 "id": 996,
                                 "name": "Plan",
-                                "nameLocations": [
-                                  "11100:4:1"
-                                ],
+                                "nameLocations": ["11100:4:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 136,
                                 "src": "11100:4:1"
@@ -12684,9 +12500,7 @@
                         "src": "11100:50:1"
                       },
                       {
-                        "assignments": [
-                          1007
-                        ],
+                        "assignments": [1007],
                         "declarations": [
                           {
                             "constant": false,
@@ -12709,9 +12523,7 @@
                               "pathNode": {
                                 "id": 1005,
                                 "name": "Product",
-                                "nameLocations": [
-                                  "11160:7:1"
-                                ],
+                                "nameLocations": ["11160:7:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 123,
                                 "src": "11160:7:1"
@@ -12793,9 +12605,7 @@
                         "src": "11160:62:1"
                       },
                       {
-                        "assignments": [
-                          1016
-                        ],
+                        "assignments": [1016],
                         "declarations": [
                           {
                             "constant": false,
@@ -12818,9 +12628,7 @@
                               "pathNode": {
                                 "id": 1014,
                                 "name": "UserSubscription",
-                                "nameLocations": [
-                                  "11232:16:1"
-                                ],
+                                "nameLocations": ["11232:16:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 149,
                                 "src": "11232:16:1"
@@ -13054,10 +12862,7 @@
                             "id": 1023,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "11331:7:1",
                             "typeDescriptions": {
@@ -13193,10 +12998,7 @@
                             "id": 1035,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "11447:7:1",
                             "typeDescriptions": {
@@ -13316,10 +13118,7 @@
                             "id": 1044,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "11523:7:1",
                             "typeDescriptions": {
@@ -13760,9 +13559,7 @@
                       "modifierName": {
                         "id": 983,
                         "name": "isActivePlan",
-                        "nameLocations": [
-                          "10953:12:1"
-                        ],
+                        "nameLocations": ["10953:12:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 370,
                         "src": "10953:12:1"
@@ -13802,9 +13599,7 @@
                       "modifierName": {
                         "id": 987,
                         "name": "isActiveProduct",
-                        "nameLocations": [
-                          "10992:15:1"
-                        ],
+                        "nameLocations": ["10992:15:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 352,
                         "src": "10992:15:1"
@@ -13844,9 +13639,7 @@
                       "modifierName": {
                         "id": 991,
                         "name": "isActiveSubscription",
-                        "nameLocations": [
-                          "11037:20:1"
-                        ],
+                        "nameLocations": ["11037:20:1"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 388,
                         "src": "11037:20:1"
@@ -14021,9 +13814,7 @@
                     "src": "12062:300:1",
                     "statements": [
                       {
-                        "assignments": [
-                          1090
-                        ],
+                        "assignments": [1090],
                         "declarations": [
                           {
                             "constant": false,
@@ -14155,9 +13946,7 @@
                                   "pathNode": {
                                     "id": 1096,
                                     "name": "UserSubscription",
-                                    "nameLocations": [
-                                      "12148:16:1"
-                                    ],
+                                    "nameLocations": ["12148:16:1"],
                                     "nodeType": "IdentifierPath",
                                     "referencedDeclaration": 149,
                                     "src": "12148:16:1"
@@ -14444,9 +14233,7 @@
                         },
                         "id": 1130,
                         "initializationExpression": {
-                          "assignments": [
-                            1105
-                          ],
+                          "assignments": [1105],
                           "declarations": [
                             {
                               "constant": false,
@@ -14621,9 +14408,7 @@
                             "pathNode": {
                               "id": 1084,
                               "name": "UserSubscription",
-                              "nameLocations": [
-                                "12021:16:1"
-                              ],
+                              "nameLocations": ["12021:16:1"],
                               "nodeType": "IdentifierPath",
                               "referencedDeclaration": 149,
                               "src": "12021:16:1"
@@ -14655,9 +14440,7 @@
                   "visibility": "public"
                 },
                 {
-                  "baseFunctions": [
-                    1874
-                  ],
+                  "baseFunctions": [1874],
                   "body": {
                     "id": 1141,
                     "nodeType": "Block",
@@ -14731,9 +14514,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1890
-                  ],
+                  "baseFunctions": [1890],
                   "body": {
                     "id": 1149,
                     "nodeType": "Block",
@@ -14807,18 +14588,14 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    2050
-                  ],
+                  "baseFunctions": [2050],
                   "body": {
                     "id": 1454,
                     "nodeType": "Block",
                     "src": "12957:4510:1",
                     "statements": [
                       {
-                        "assignments": [
-                          1160
-                        ],
+                        "assignments": [1160],
                         "declarations": [
                           {
                             "constant": false,
@@ -14841,9 +14618,7 @@
                               "pathNode": {
                                 "id": 1158,
                                 "name": "PluginManifest",
-                                "nameLocations": [
-                                  "12967:14:1"
-                                ],
+                                "nameLocations": ["12967:14:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 1616,
                                 "src": "12967:14:1"
@@ -16072,9 +15847,7 @@
                         "src": "13852:57:1"
                       },
                       {
-                        "assignments": [
-                          1265
-                        ],
+                        "assignments": [1265],
                         "declarations": [
                           {
                             "constant": false,
@@ -16097,9 +15870,7 @@
                               "pathNode": {
                                 "id": 1263,
                                 "name": "ManifestFunction",
-                                "nameLocations": [
-                                  "14031:16:1"
-                                ],
+                                "nameLocations": ["14031:16:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 1534,
                                 "src": "14031:16:1"
@@ -16206,16 +15977,8 @@
                           "isPure": true,
                           "kind": "structConstructorCall",
                           "lValueRequested": false,
-                          "nameLocations": [
-                            "14118:12:1",
-                            "14187:10:1",
-                            "14248:15:1"
-                          ],
-                          "names": [
-                            "functionType",
-                            "functionId",
-                            "dependencyIndex"
-                          ],
+                          "nameLocations": ["14118:12:1", "14187:10:1", "14248:15:1"],
+                          "names": ["functionType", "functionId", "dependencyIndex"],
                           "nodeType": "FunctionCall",
                           "src": "14087:240:1",
                           "tryCall": false,
@@ -16308,9 +16071,7 @@
                                   "pathNode": {
                                     "id": 1276,
                                     "name": "ManifestAssociatedFunction",
-                                    "nameLocations": [
-                                      "14569:26:1"
-                                    ],
+                                    "nameLocations": ["14569:26:1"],
                                     "nodeType": "IdentifierPath",
                                     "referencedDeclaration": 1540,
                                     "src": "14569:26:1"
@@ -16509,14 +16270,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "14691:17:1",
-                              "14747:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["14691:17:1", "14747:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "14650:157:1",
                             "tryCall": false,
@@ -16687,14 +16442,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "14898:17:1",
-                              "14956:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["14898:17:1", "14956:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "14857:159:1",
                             "tryCall": false,
@@ -16865,14 +16614,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "15107:17:1",
-                              "15176:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["15107:17:1", "15176:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "15066:170:1",
                             "tryCall": false,
@@ -17043,14 +16786,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "15327:17:1",
-                              "15387:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["15327:17:1", "15387:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "15286:161:1",
                             "tryCall": false,
@@ -17221,14 +16958,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "15538:17:1",
-                              "15595:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["15538:17:1", "15595:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "15497:158:1",
                             "tryCall": false,
@@ -17399,14 +17130,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "15746:17:1",
-                              "15806:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["15746:17:1", "15806:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "15705:161:1",
                             "tryCall": false,
@@ -17577,14 +17302,8 @@
                             "isPure": false,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "15957:17:1",
-                              "16014:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["15957:17:1", "16014:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "15916:158:1",
                             "tryCall": false,
@@ -17684,9 +17403,7 @@
                                   "pathNode": {
                                     "id": 1378,
                                     "name": "ManifestAssociatedFunction",
-                                    "nameLocations": [
-                                      "16212:26:1"
-                                    ],
+                                    "nameLocations": ["16212:26:1"],
                                     "nodeType": "IdentifierPath",
                                     "referencedDeclaration": 1540,
                                     "src": "16212:26:1"
@@ -17939,16 +17656,8 @@
                                 "isPure": true,
                                 "kind": "structConstructorCall",
                                 "lValueRequested": false,
-                                "nameLocations": [
-                                  "16445:12:1",
-                                  "16528:10:1",
-                                  "16559:15:1"
-                                ],
-                                "names": [
-                                  "functionType",
-                                  "functionId",
-                                  "dependencyIndex"
-                                ],
+                                "nameLocations": ["16445:12:1", "16528:10:1", "16559:15:1"],
+                                "names": ["functionType", "functionId", "dependencyIndex"],
                                 "nodeType": "FunctionCall",
                                 "src": "16410:182:1",
                                 "tryCall": false,
@@ -17986,14 +17695,8 @@
                             "isPure": true,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "16334:17:1",
-                              "16390:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["16334:17:1", "16390:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "16293:310:1",
                             "tryCall": false,
@@ -18218,16 +17921,8 @@
                                 "isPure": true,
                                 "kind": "structConstructorCall",
                                 "lValueRequested": false,
-                                "nameLocations": [
-                                  "16807:12:1",
-                                  "16890:10:1",
-                                  "16921:15:1"
-                                ],
-                                "names": [
-                                  "functionType",
-                                  "functionId",
-                                  "dependencyIndex"
-                                ],
+                                "nameLocations": ["16807:12:1", "16890:10:1", "16921:15:1"],
+                                "names": ["functionType", "functionId", "dependencyIndex"],
                                 "nodeType": "FunctionCall",
                                 "src": "16772:182:1",
                                 "tryCall": false,
@@ -18265,14 +17960,8 @@
                             "isPure": true,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "16694:17:1",
-                              "16752:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["16694:17:1", "16752:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "16653:312:1",
                             "tryCall": false,
@@ -18497,16 +18186,8 @@
                                 "isPure": true,
                                 "kind": "structConstructorCall",
                                 "lValueRequested": false,
-                                "nameLocations": [
-                                  "17180:12:1",
-                                  "17263:10:1",
-                                  "17294:15:1"
-                                ],
-                                "names": [
-                                  "functionType",
-                                  "functionId",
-                                  "dependencyIndex"
-                                ],
+                                "nameLocations": ["17180:12:1", "17263:10:1", "17294:15:1"],
+                                "names": ["functionType", "functionId", "dependencyIndex"],
                                 "nodeType": "FunctionCall",
                                 "src": "17145:182:1",
                                 "tryCall": false,
@@ -18544,14 +18225,8 @@
                             "isPure": true,
                             "kind": "structConstructorCall",
                             "lValueRequested": false,
-                            "nameLocations": [
-                              "17056:17:1",
-                              "17125:18:1"
-                            ],
-                            "names": [
-                              "executionSelector",
-                              "associatedFunction"
-                            ],
+                            "nameLocations": ["17056:17:1", "17125:18:1"],
+                            "names": ["executionSelector", "associatedFunction"],
                             "nodeType": "FunctionCall",
                             "src": "17015:323:1",
                             "tryCall": false,
@@ -18767,9 +18442,7 @@
                           "pathNode": {
                             "id": 1154,
                             "name": "PluginManifest",
-                            "nameLocations": [
-                              "12934:14:1"
-                            ],
+                            "nameLocations": ["12934:14:1"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1616,
                             "src": "12934:14:1"
@@ -18793,18 +18466,14 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    2064
-                  ],
+                  "baseFunctions": [2064],
                   "body": {
                     "id": 1486,
                     "nodeType": "Block",
                     "src": "17592:172:1",
                     "statements": [
                       {
-                        "assignments": [
-                          1464
-                        ],
+                        "assignments": [1464],
                         "declarations": [
                           {
                             "constant": false,
@@ -18827,9 +18496,7 @@
                               "pathNode": {
                                 "id": 1462,
                                 "name": "PluginMetadata",
-                                "nameLocations": [
-                                  "17602:14:1"
-                                ],
+                                "nameLocations": ["17602:14:1"],
                                 "nodeType": "IdentifierPath",
                                 "referencedDeclaration": 1574,
                                 "src": "17602:14:1"
@@ -19090,9 +18757,7 @@
                           "pathNode": {
                             "id": 1458,
                             "name": "PluginMetadata",
-                            "nameLocations": [
-                              "17569:14:1"
-                            ],
+                            "nameLocations": ["17569:14:1"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1574,
                             "src": "17569:14:1"
@@ -19322,23 +18987,8 @@
               ],
               "scope": 1504,
               "src": "481:17416:1",
-              "usedErrors": [
-                1783,
-                1785,
-                1789,
-                1795,
-                1797
-              ],
-              "usedEvents": [
-                196,
-                208,
-                220,
-                226,
-                238,
-                244,
-                252,
-                262
-              ]
+              "usedErrors": [1783, 1785, 1789, 1795, 1797],
+              "usedEvents": [196, 208, 220, 226, 238, 244, 252, 262]
             }
           ],
           "src": "39:17859:1"
@@ -19349,9 +18999,7 @@
         "ast": {
           "absolutePath": "modular-account-libs/interfaces/IERC165.sol",
           "exportedSymbols": {
-            "IERC165": [
-              1515
-            ]
+            "IERC165": [1515]
           },
           "id": 1516,
           "license": "MIT",
@@ -19359,12 +19007,7 @@
           "nodes": [
             {
               "id": 1505,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".20"
-              ],
+              "literals": ["solidity", "^", "0.8", ".20"],
               "nodeType": "PragmaDirective",
               "src": "161:24:2"
             },
@@ -19382,9 +19025,7 @@
               },
               "fullyImplemented": false,
               "id": 1515,
-              "linearizedBaseContracts": [
-                1515
-              ],
+              "linearizedBaseContracts": [1515],
               "name": "IERC165",
               "nameLocation": "477:7:2",
               "nodeType": "ContractDefinition",
@@ -19493,36 +19134,16 @@
         "ast": {
           "absolutePath": "modular-account-libs/interfaces/IPlugin.sol",
           "exportedSymbols": {
-            "IPlugin": [
-              1716
-            ],
-            "ManifestAssociatedFunction": [
-              1540
-            ],
-            "ManifestAssociatedFunctionType": [
-              1525
-            ],
-            "ManifestExecutionHook": [
-              1549
-            ],
-            "ManifestExternalCallPermission": [
-              1557
-            ],
-            "ManifestFunction": [
-              1534
-            ],
-            "PluginManifest": [
-              1616
-            ],
-            "PluginMetadata": [
-              1574
-            ],
-            "SelectorPermission": [
-              1562
-            ],
-            "UserOperation": [
-              1766
-            ]
+            "IPlugin": [1716],
+            "ManifestAssociatedFunction": [1540],
+            "ManifestAssociatedFunctionType": [1525],
+            "ManifestExecutionHook": [1549],
+            "ManifestExternalCallPermission": [1557],
+            "ManifestFunction": [1534],
+            "PluginManifest": [1616],
+            "PluginMetadata": [1574],
+            "SelectorPermission": [1562],
+            "UserOperation": [1766]
           },
           "id": 1717,
           "license": "CC0-1.0",
@@ -19530,12 +19151,7 @@
           "nodes": [
             {
               "id": 1517,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".20"
-              ],
+              "literals": ["solidity", "^", "0.8", ".20"],
               "nodeType": "PragmaDirective",
               "src": "180:24:3"
             },
@@ -19640,9 +19256,7 @@
                     "pathNode": {
                       "id": 1527,
                       "name": "ManifestAssociatedFunctionType",
-                      "nameLocations": [
-                        "1760:30:3"
-                      ],
+                      "nameLocations": ["1760:30:3"],
                       "nodeType": "IdentifierPath",
                       "referencedDeclaration": 1525,
                       "src": "1760:30:3"
@@ -19770,9 +19384,7 @@
                     "pathNode": {
                       "id": 1537,
                       "name": "ManifestFunction",
-                      "nameLocations": [
-                        "1929:16:3"
-                      ],
+                      "nameLocations": ["1929:16:3"],
                       "nodeType": "IdentifierPath",
                       "referencedDeclaration": 1534,
                       "src": "1929:16:3"
@@ -19846,9 +19458,7 @@
                     "pathNode": {
                       "id": 1543,
                       "name": "ManifestFunction",
-                      "nameLocations": [
-                        "2034:16:3"
-                      ],
+                      "nameLocations": ["2034:16:3"],
                       "nodeType": "IdentifierPath",
                       "referencedDeclaration": 1534,
                       "src": "2034:16:3"
@@ -19883,9 +19493,7 @@
                     "pathNode": {
                       "id": 1546,
                       "name": "ManifestFunction",
-                      "nameLocations": [
-                        "2068:16:3"
-                      ],
+                      "nameLocations": ["2068:16:3"],
                       "nodeType": "IdentifierPath",
                       "referencedDeclaration": 1534,
                       "src": "2068:16:3"
@@ -20189,9 +19797,7 @@
                       "pathNode": {
                         "id": 1570,
                         "name": "SelectorPermission",
-                        "nameLocations": [
-                          "2929:18:3"
-                        ],
+                        "nameLocations": ["2929:18:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1562,
                         "src": "2929:18:3"
@@ -20451,9 +20057,7 @@
                       "pathNode": {
                         "id": 1592,
                         "name": "ManifestExternalCallPermission",
-                        "nameLocations": [
-                          "4177:30:3"
-                        ],
+                        "nameLocations": ["4177:30:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1557,
                         "src": "4177:30:3"
@@ -20497,9 +20101,7 @@
                       "pathNode": {
                         "id": 1596,
                         "name": "ManifestAssociatedFunction",
-                        "nameLocations": [
-                          "4238:26:3"
-                        ],
+                        "nameLocations": ["4238:26:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1540,
                         "src": "4238:26:3"
@@ -20543,9 +20145,7 @@
                       "pathNode": {
                         "id": 1600,
                         "name": "ManifestAssociatedFunction",
-                        "nameLocations": [
-                          "4298:26:3"
-                        ],
+                        "nameLocations": ["4298:26:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1540,
                         "src": "4298:26:3"
@@ -20589,9 +20189,7 @@
                       "pathNode": {
                         "id": 1604,
                         "name": "ManifestAssociatedFunction",
-                        "nameLocations": [
-                          "4359:26:3"
-                        ],
+                        "nameLocations": ["4359:26:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1540,
                         "src": "4359:26:3"
@@ -20635,9 +20233,7 @@
                       "pathNode": {
                         "id": 1608,
                         "name": "ManifestAssociatedFunction",
-                        "nameLocations": [
-                          "4418:26:3"
-                        ],
+                        "nameLocations": ["4418:26:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1540,
                         "src": "4418:26:3"
@@ -20681,9 +20277,7 @@
                       "pathNode": {
                         "id": 1612,
                         "name": "ManifestExecutionHook",
-                        "nameLocations": [
-                          "4478:21:3"
-                        ],
+                        "nameLocations": ["4478:21:3"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 1549,
                         "src": "4478:21:3"
@@ -20727,9 +20321,7 @@
               },
               "fullyImplemented": false,
               "id": 1716,
-              "linearizedBaseContracts": [
-                1716
-              ],
+              "linearizedBaseContracts": [1716],
               "name": "IPlugin",
               "nameLocation": "4559:7:3",
               "nodeType": "ContractDefinition",
@@ -20923,9 +20515,7 @@
                           "pathNode": {
                             "id": 1633,
                             "name": "UserOperation",
-                            "nameLocations": [
-                              "5807:13:3"
-                            ],
+                            "nameLocations": ["5807:13:3"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1766,
                             "src": "5807:13:3"
@@ -21076,9 +20666,7 @@
                           "pathNode": {
                             "id": 1646,
                             "name": "UserOperation",
-                            "nameLocations": [
-                              "6394:13:3"
-                            ],
+                            "nameLocations": ["6394:13:3"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1766,
                             "src": "6394:13:3"
@@ -21753,9 +21341,7 @@
                           "pathNode": {
                             "id": 1704,
                             "name": "PluginManifest",
-                            "nameLocations": [
-                              "9004:14:3"
-                            ],
+                            "nameLocations": ["9004:14:3"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1616,
                             "src": "9004:14:3"
@@ -21824,9 +21410,7 @@
                           "pathNode": {
                             "id": 1711,
                             "name": "PluginMetadata",
-                            "nameLocations": [
-                              "9249:14:3"
-                            ],
+                            "nameLocations": ["9249:14:3"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1574,
                             "src": "9249:14:3"
@@ -21864,9 +21448,7 @@
         "ast": {
           "absolutePath": "modular-account-libs/interfaces/IPluginExecutor.sol",
           "exportedSymbols": {
-            "IPluginExecutor": [
-              1740
-            ]
+            "IPluginExecutor": [1740]
           },
           "id": 1741,
           "license": "CC0-1.0",
@@ -21874,12 +21456,7 @@
           "nodes": [
             {
               "id": 1718,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".20"
-              ],
+              "literals": ["solidity", "^", "0.8", ".20"],
               "nodeType": "PragmaDirective",
               "src": "180:24:4"
             },
@@ -21897,9 +21474,7 @@
               },
               "fullyImplemented": false,
               "id": 1740,
-              "linearizedBaseContracts": [
-                1740
-              ],
+              "linearizedBaseContracts": [1740],
               "name": "IPluginExecutor",
               "nameLocation": "253:15:4",
               "nodeType": "ContractDefinition",
@@ -22152,9 +21727,7 @@
         "ast": {
           "absolutePath": "modular-account-libs/interfaces/UserOperation.sol",
           "exportedSymbols": {
-            "UserOperation": [
-              1766
-            ]
+            "UserOperation": [1766]
           },
           "id": 1767,
           "license": "CC0-1.0",
@@ -22162,12 +21735,7 @@
           "nodes": [
             {
               "id": 1742,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".20"
-              ],
+              "literals": ["solidity", "^", "0.8", ".20"],
               "nodeType": "PragmaDirective",
               "src": "180:24:5"
             },
@@ -22496,24 +22064,12 @@
         "ast": {
           "absolutePath": "modular-account-libs/plugins/BasePlugin.sol",
           "exportedSymbols": {
-            "BasePlugin": [
-              2112
-            ],
-            "ERC165": [
-              2136
-            ],
-            "IPlugin": [
-              1716
-            ],
-            "PluginManifest": [
-              1616
-            ],
-            "PluginMetadata": [
-              1574
-            ],
-            "UserOperation": [
-              1766
-            ]
+            "BasePlugin": [2112],
+            "ERC165": [2136],
+            "IPlugin": [1716],
+            "PluginManifest": [1616],
+            "PluginMetadata": [1574],
+            "UserOperation": [1766]
           },
           "id": 2113,
           "license": "MIT",
@@ -22521,12 +22077,7 @@
           "nodes": [
             {
               "id": 1768,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".20"
-              ],
+              "literals": ["solidity", "^", "0.8", ".20"],
               "nodeType": "PragmaDirective",
               "src": "81:24:6"
             },
@@ -22636,9 +22187,7 @@
                   "baseName": {
                     "id": 1778,
                     "name": "ERC165",
-                    "nameLocations": [
-                      "1014:6:6"
-                    ],
+                    "nameLocations": ["1014:6:6"],
                     "nodeType": "IdentifierPath",
                     "referencedDeclaration": 2136,
                     "src": "1014:6:6"
@@ -22651,9 +22200,7 @@
                   "baseName": {
                     "id": 1780,
                     "name": "IPlugin",
-                    "nameLocations": [
-                      "1022:7:6"
-                    ],
+                    "nameLocations": ["1022:7:6"],
                     "nodeType": "IdentifierPath",
                     "referencedDeclaration": 1716,
                     "src": "1022:7:6"
@@ -22674,12 +22221,7 @@
               },
               "fullyImplemented": true,
               "id": 2112,
-              "linearizedBaseContracts": [
-                2112,
-                1716,
-                2136,
-                1515
-              ],
+              "linearizedBaseContracts": [2112, 1716, 2136, 1515],
               "name": "BasePlugin",
               "nameLocation": "1000:10:6",
               "nodeType": "ContractDefinition",
@@ -23440,9 +22982,7 @@
                   "visibility": "internal"
                 },
                 {
-                  "baseFunctions": [
-                    1623
-                  ],
+                  "baseFunctions": [1623],
                   "body": {
                     "id": 1873,
                     "nodeType": "Block",
@@ -23737,9 +23277,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1629
-                  ],
+                  "baseFunctions": [1629],
                   "body": {
                     "id": 1889,
                     "nodeType": "Block",
@@ -23930,9 +23468,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1642
-                  ],
+                  "baseFunctions": [1642],
                   "body": {
                     "id": 1914,
                     "nodeType": "Block",
@@ -24148,9 +23684,7 @@
                           "pathNode": {
                             "id": 1894,
                             "name": "UserOperation",
-                            "nameLocations": [
-                              "3230:13:6"
-                            ],
+                            "nameLocations": ["3230:13:6"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1766,
                             "src": "3230:13:6"
@@ -24235,9 +23769,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1655
-                  ],
+                  "baseFunctions": [1655],
                   "body": {
                     "id": 1939,
                     "nodeType": "Block",
@@ -24453,9 +23985,7 @@
                           "pathNode": {
                             "id": 1919,
                             "name": "UserOperation",
-                            "nameLocations": [
-                              "3938:13:6"
-                            ],
+                            "nameLocations": ["3938:13:6"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1766,
                             "src": "3938:13:6"
@@ -24540,9 +24070,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1667
-                  ],
+                  "baseFunctions": [1667],
                   "body": {
                     "id": 1964,
                     "nodeType": "Block",
@@ -24847,9 +24375,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1679
-                  ],
+                  "baseFunctions": [1679],
                   "body": {
                     "id": 1989,
                     "nodeType": "Block",
@@ -25154,9 +24680,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1693
-                  ],
+                  "baseFunctions": [1693],
                   "body": {
                     "id": 2016,
                     "nodeType": "Block",
@@ -25489,9 +25013,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1701
-                  ],
+                  "baseFunctions": [1701],
                   "body": {
                     "id": 2035,
                     "nodeType": "Block",
@@ -25717,9 +25239,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1708
-                  ],
+                  "baseFunctions": [1708],
                   "body": {
                     "id": 2049,
                     "nodeType": "Block",
@@ -25861,9 +25381,7 @@
                           "pathNode": {
                             "id": 2039,
                             "name": "PluginManifest",
-                            "nameLocations": [
-                              "7165:14:6"
-                            ],
+                            "nameLocations": ["7165:14:6"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1616,
                             "src": "7165:14:6"
@@ -25887,9 +25405,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    1715
-                  ],
+                  "baseFunctions": [1715],
                   "body": {
                     "id": 2063,
                     "nodeType": "Block",
@@ -26031,9 +25547,7 @@
                           "pathNode": {
                             "id": 2053,
                             "name": "PluginMetadata",
-                            "nameLocations": [
-                              "7468:14:6"
-                            ],
+                            "nameLocations": ["7468:14:6"],
                             "nodeType": "IdentifierPath",
                             "referencedDeclaration": 1574,
                             "src": "7468:14:6"
@@ -26057,9 +25571,7 @@
                   "visibility": "external"
                 },
                 {
-                  "baseFunctions": [
-                    2135
-                  ],
+                  "baseFunctions": [2135],
                   "body": {
                     "id": 2085,
                     "nodeType": "Block",
@@ -26631,13 +26143,7 @@
               ],
               "scope": 2113,
               "src": "982:8312:6",
-              "usedErrors": [
-                1783,
-                1785,
-                1789,
-                1795,
-                1797
-              ],
+              "usedErrors": [1783, 1785, 1789, 1795, 1797],
               "usedEvents": []
             }
           ],
@@ -26649,12 +26155,8 @@
         "ast": {
           "absolutePath": "modular-account-libs/plugins/ERC165.sol",
           "exportedSymbols": {
-            "ERC165": [
-              2136
-            ],
-            "IERC165": [
-              1515
-            ]
+            "ERC165": [2136],
+            "IERC165": [1515]
           },
           "id": 2137,
           "license": "MIT",
@@ -26662,12 +26164,7 @@
           "nodes": [
             {
               "id": 2114,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".20"
-              ],
+              "literals": ["solidity", "^", "0.8", ".20"],
               "nodeType": "PragmaDirective",
               "src": "160:24:7"
             },
@@ -26703,9 +26200,7 @@
                   "baseName": {
                     "id": 2118,
                     "name": "IERC165",
-                    "nameLocations": [
-                      "745:7:7"
-                    ],
+                    "nameLocations": ["745:7:7"],
                     "nodeType": "IdentifierPath",
                     "referencedDeclaration": 1515,
                     "src": "745:7:7"
@@ -26726,18 +26221,13 @@
               },
               "fullyImplemented": true,
               "id": 2136,
-              "linearizedBaseContracts": [
-                2136,
-                1515
-              ],
+              "linearizedBaseContracts": [2136, 1515],
               "name": "ERC165",
               "nameLocation": "735:6:7",
               "nodeType": "ContractDefinition",
               "nodes": [
                 {
-                  "baseFunctions": [
-                    1514
-                  ],
+                  "baseFunctions": [1514],
                   "body": {
                     "id": 2134,
                     "nodeType": "Block",

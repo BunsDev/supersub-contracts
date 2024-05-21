@@ -203,10 +203,7 @@ contract SubscriptionPlugin is BasePlugin {
         );
     }
 
-    function updatePlan(
-        bytes32 _planId,
-        bool _isActive
-    ) public planExists(_planId, msg.sender) {
+    function updatePlan(bytes32 _planId, bool _isActive) public planExists(_planId, msg.sender) {
         Plan storage plan = providerPlans[msg.sender][_planId];
         plan.isActive = _isActive;
         emit PlanUpdated(plan.planId, plan.isActive);
