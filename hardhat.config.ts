@@ -9,7 +9,15 @@ import 'solidity-coverage';
 import 'dotenv/config';
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.24',
+  solidity: {
+    version: '0.8.24',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
   gasReporter: {
     enabled: true,
   },
@@ -28,10 +36,12 @@ const config: HardhatUserConfig = {
           },
           eth: {
             url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY!}`,
+            chainId: 1,
             accounts: [process.env.PRIVATE_KEY!],
           },
           polygonAmoy: {
             url: `https://polygon-amoy.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY!}`,
+            chainId: 80002,
             accounts: [process.env.PRIVATE_KEY!],
           },
         }

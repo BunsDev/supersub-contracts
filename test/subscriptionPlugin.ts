@@ -16,6 +16,8 @@ describe('Subscription Plugin Tests', function () {
   };
 
   async function setUp() {
+    const val = 80002;
+    console.log(hre.ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [val]));
     const EntryPointFactory = await hre.ethers.getContractFactory('EntryPoint');
     const TestTokenFactory = await hre.ethers.getContractFactory('TestToken');
     const SubscriptionPluginFactory = await hre.ethers.getContractFactory('SubscriptionPlugin');
@@ -24,7 +26,7 @@ describe('Subscription Plugin Tests', function () {
 
     const entrypoint = (await EntryPointFactory.deploy()) as unknown as IEntryPoint;
     const token = await TestTokenFactory.deploy();
-    const subscriptionPlugin = await SubscriptionPluginFactory.deploy(chainId, [await token.getAddress()]);
+    const subscriptionPlugin = await SubscriptionPluginFactory.deploy(chainId);
     const singleOwnerPlugin = await SingleOwnerPluginFactory.deploy();
     const [beneficiary, mscaOwner] = await hre.ethers.getSigners();
     const mscaAccount = await UpgradeableModularAccountFactory.deploy(await entrypoint.getAddress());
@@ -59,10 +61,9 @@ describe('Subscription Plugin Tests', function () {
   }
 
   describe('Deployment Test', function () {
-    it('Should set correct chain ID and supported tokens', async () => {
+    it('Should set correct chain ID', async () => {
       const { subscriptionPlugin, token } = await loadFixture(setUp);
       expect(await subscriptionPlugin.currentChainId()).to.equal(chainId);
-      expect(await subscriptionPlugin.supportedTokens(await token.getAddress())).to.equal(true);
     });
   });
 
@@ -159,18 +160,18 @@ describe('Subscription Plugin Tests', function () {
         .withArgs(product.productId, '0xdAC17F958D2ee523a2206206994597C13D831ec7', await token.getAddress(), 3, true);
 
       // Update Plan
-      const newPrice = BigInt(50) * BigInt(10) ** (await token.decimals());
-      const txn2 = await subscriptionPlugin.connect(signer).updatePlan(hre.ethers.toBeHex(0, 32), newPrice, 500, true);
+      //const newPrice = BigInt(50) * BigInt(10) ** (await token.decimals());
+      const txn2 = await subscriptionPlugin.connect(signer).updatePlan(hre.ethers.toBeHex(0, 32), false);
       const plan = await subscriptionPlugin.providerPlans(signer.address, hre.ethers.toBeHex(0, 32));
-      expect(plan.chargeInterval).to.equal(500);
-      expect(plan.price).to.equal(newPrice);
-      expect(plan.isActive).to.equal(true);
-      await expect(txn2).to.emit(subscriptionPlugin, 'PlanUpdated').withArgs(plan.planId, newPrice, 500, true);
+      // expect(plan.chargeInterval).to.equal(500);
+      // expect(plan.price).to.equal(newPrice);
+      expect(plan.isActive).to.equal(false);
+      await expect(txn2).to.emit(subscriptionPlugin, 'PlanUpdated').withArgs(plan.planId, false);
     });
     it('MSCA can create & Update product', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
-      const funcSig = 'createProduct(bytes32,address,address,uint8)';
-      const types = ['bytes32', 'address', 'address', 'uint8'];
+      const funcSig = 'createProduct(bytes32,address,address,uint256)';
+      const types = ['bytes32', 'address', 'address', 'uint256'];
       const productName = hre.ethers.encodeBytes32String('Test Product');
       const tokenAddr = await token.getAddress();
       const recvAddr = mscaOwner.address;
@@ -219,8 +220,8 @@ describe('Subscription Plugin Tests', function () {
         nonce: 1,
         initCode: '0x',
         callData: getCallData(
-          'updateProduct(bytes32,address,address,uint8,bool)',
-          ['bytes32', 'address', 'address', 'uint8', 'bool'],
+          'updateProduct(bytes32,address,address,uint256,bool)',
+          ['bytes32', 'address', 'address', 'uint256', 'bool'],
           [expectedProductId, await token.getAddress(), beneficiary.address, 10, false]
         ),
         callGasLimit: 700000,
@@ -253,8 +254,8 @@ describe('Subscription Plugin Tests', function () {
         nonce: 0,
         initCode: '0x',
         callData: getCallData(
-          'createProduct(bytes32,address,address,uint8)',
-          ['bytes32', 'address', 'address', 'uint8'],
+          'createProduct(bytes32,address,address,uint256)',
+          ['bytes32', 'address', 'address', 'uint256'],
           [hre.ethers.encodeBytes32String('Test Product'), await token.getAddress(), mscaOwner.address, chainId]
         ),
         callGasLimit: 700000,
@@ -319,9 +320,9 @@ describe('Subscription Plugin Tests', function () {
         nonce: 2,
         initCode: '0x',
         callData: getCallData(
-          'updatePlan(bytes32,uint256,uint32,bool)',
-          ['bytes32', 'uint256', 'uint32', 'bool'],
-          [expectedPlanId, newPrice, newInterval, false]
+          'updatePlan(bytes32,bool)',
+          ['bytes32', 'bool'],
+          [expectedPlanId, false]
         ),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
@@ -336,12 +337,12 @@ describe('Subscription Plugin Tests', function () {
       updatePlanUserOp.signature = updatePlanSig;
       const updateTxn = await entrypoint.handleOps([updatePlanUserOp], beneficiary.address);
       const updatedPlan = await subscriptionPlugin.providerPlans(expectedProvider, expectedPlanId);
-      expect(updatedPlan.price).to.equal(newPrice);
-      expect(updatedPlan.chargeInterval).to.equal(newInterval);
+      // expect(updatedPlan.price).to.equal(newPrice);
+      // expect(updatedPlan.chargeInterval).to.equal(newInterval);
       expect(updatedPlan.isActive).to.equal(false);
       await expect(updateTxn)
         .to.emit(subscriptionPlugin, 'PlanUpdated')
-        .withArgs(plan.planId, newPrice, newInterval, false);
+        .withArgs(plan.planId, false);
     });
   });
 
@@ -361,8 +362,8 @@ describe('Subscription Plugin Tests', function () {
         nonce: 0,
         initCode: '0x',
         callData: getCallData(
-          'createProduct(bytes32,address,address,uint8)',
-          ['bytes32', 'address', 'address', 'uint8'],
+          'createProduct(bytes32,address,address,uint256)',
+          ['bytes32', 'address', 'address', 'uint256'],
           [hre.ethers.encodeBytes32String('Test Product'), await token.getAddress(), mscaOwner.address, chainId]
         ),
         callGasLimit: 700000,

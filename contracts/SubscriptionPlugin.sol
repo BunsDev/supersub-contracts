@@ -19,7 +19,7 @@ contract SubscriptionPlugin is BasePlugin {
         address provider;
         address chargeToken;
         address receivingAddress;
-        uint8 destinationChain;
+        uint256 destinationChain;
         uint8 planNonce;
         bool isActive;
     }
@@ -40,9 +40,8 @@ contract SubscriptionPlugin is BasePlugin {
         bool isActive;
     }
 
-    uint8 public currentChainId;
+    uint256 public currentChainId;
     address public admin;
-    mapping(address => bool) public supportedTokens;
     mapping(address => uint256) public productNonces;
     mapping(address => uint256) public subscriptionNonces;
     mapping(address => mapping(bytes32 => Product)) public providerProducts;
@@ -54,14 +53,14 @@ contract SubscriptionPlugin is BasePlugin {
         address indexed provider,
         bytes32 name,
         address chargeToken,
-        uint8 destinationChain,
+        uint256 destinationChain,
         bool isActive
     );
     event ProductUpdated(
         bytes32 indexed productId,
         address receivingAddress,
         address chargeToken,
-        uint8 destinationChain,
+        uint256 destinationChain,
         bool isActive
     );
     event PlanCreated(
@@ -71,7 +70,7 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 chargeInterval,
         bool isActive
     );
-    event PlanUpdated(bytes32 indexed planId, uint256 price, uint256 chargeInterval, bool isActive);
+    event PlanUpdated(bytes32 indexed planId, bool isActive);
     event Subscribed(
         address indexed subscriber,
         address provider,
@@ -88,12 +87,9 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 amount
     );
 
-    constructor(uint8 chainId, address[] memory _supportedTokens) {
+    constructor(uint256 chainId) {
         admin = msg.sender;
         currentChainId = chainId;
-        for (uint i = 0; i < _supportedTokens.length; i++) {
-            supportedTokens[_supportedTokens[i]] = true;
-        }
     }
 
     // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -125,11 +121,6 @@ contract SubscriptionPlugin is BasePlugin {
         _;
     }
 
-    modifier isSupportedToken(address addr) {
-        require(supportedTokens[addr], "Token not supported");
-        _;
-    }
-
     modifier isActiveSubscription(address subscriber, bytes32 subscriptionId) {
         require(userSubscriptions[subscriber][subscriptionId].isActive, "Subscription not active");
         _;
@@ -148,8 +139,8 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 _name,
         address _chargeToken,
         address _receivingAddress,
-        uint8 _destinationChain
-    ) public isSupportedToken(_chargeToken) {
+        uint256 _destinationChain
+    ) public {
         Product memory product = Product({
             name: _name,
             productId: bytes32(uint256(productNonces[msg.sender])),
@@ -195,9 +186,9 @@ contract SubscriptionPlugin is BasePlugin {
         bytes32 _productId,
         address _chargeToken,
         address _receivingAddr,
-        uint8 _destChain,
+        uint256 _destChain,
         bool _isActive
-    ) public productExists(_productId, msg.sender) isSupportedToken(_chargeToken) {
+    ) public productExists(_productId, msg.sender) {
         Product storage product = providerProducts[msg.sender][_productId];
         product.chargeToken = _chargeToken;
         product.receivingAddress = _receivingAddr;
@@ -214,15 +205,11 @@ contract SubscriptionPlugin is BasePlugin {
 
     function updatePlan(
         bytes32 _planId,
-        uint256 _price,
-        uint32 _chargeInterval,
         bool _isActive
     ) public planExists(_planId, msg.sender) {
         Plan storage plan = providerPlans[msg.sender][_planId];
-        plan.price = _price;
-        plan.chargeInterval = _chargeInterval;
         plan.isActive = _isActive;
-        emit PlanUpdated(plan.planId, plan.price, plan.chargeInterval, plan.isActive);
+        emit PlanUpdated(plan.planId, plan.isActive);
     }
 
     function subscribe(
@@ -292,14 +279,6 @@ contract SubscriptionPlugin is BasePlugin {
         emit SubscriptionPlanChanged(msg.sender, subscriptionId, planId);
     }
 
-    function validateERC20(address tokenAddr) internal view returns (bool) {
-        try IERC20(tokenAddr).totalSupply() returns (uint256) {
-            return true;
-        } catch {
-            return false;
-        }
-    }
-
     function isSubscribedToProduct(address subscriber, bytes32 productId) public view returns (bool) {
         for (uint i = 0; i < subscriptionNonces[subscriber]; i++) {
             if (userSubscriptions[subscriber][bytes32(i)].product == productId) {
@@ -314,7 +293,7 @@ contract SubscriptionPlugin is BasePlugin {
         address subscriber,
         address chargeToken,
         address receivingAddress,
-        uint8 destinationChain
+        uint256 destinationChain
     ) internal {
         bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), amount));
         IPluginExecutor(subscriber).executeFromPluginExternal(chargeToken, 0, callData);
