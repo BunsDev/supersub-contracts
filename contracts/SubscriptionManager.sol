@@ -193,10 +193,9 @@ contract SubscriptionManagerPlugin is BasePlugin {
         address receivingAddress,
         uint8 receiveChainId
     ) public planExists(planId) planNotDeleted(planId) isPlanProvider(planId, msg.sender) {
-        SubscriptionPlan memory plan = subscriptionPlans[planId];
+        SubscriptionPlan storage plan = subscriptionPlans[planId];
         plan.receivingAddress = receivingAddress;
         plan.receiveChainId = receiveChainId;
-        subscriptionPlans[planId] = plan;
         emit PlanChanged(
             planId,
             plan.price,

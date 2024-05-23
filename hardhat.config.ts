@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
     runOnCompile: true,
     only: ['SubscriptionPlugin', 'SubscriptionManager'],
     path: './abis',
-    pretty: true,
+    format: 'json',
     clear: true,
   },
   networks:
