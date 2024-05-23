@@ -137,6 +137,12 @@
       },
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "receivingAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "destinationChain",
         "type": "uint256"
@@ -232,6 +238,12 @@
         "indexed": true,
         "internalType": "address",
         "name": "subscriber",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "recipient",
         "type": "address"
       },
       {
