@@ -76,12 +76,13 @@ describe('Subscription Plugin Tests', function () {
       const beforeCreateProductNonce = await await subscriptionPlugin.productNonce();
       const txn = await subscriptionPlugin
         .connect(signer)
-        .createProduct(productName, tokenAddress, reciepient.address, chainId);
+        .createProduct(productName, 1, tokenAddress, reciepient.address, chainId);
       const afterCreateProductNonce = await subscriptionPlugin.productNonce();
 
       const product = await subscriptionPlugin.products(beforeCreateProductNonce);
       expect(afterCreateProductNonce).to.equal(beforeCreateProductNonce + BigInt(1));
       expect(product.name).to.equal(productName);
+      expect(product.productType).to.equal(1);
       expect(product.provider).to.equal(signer.address);
       expect(product.chargeToken).to.equal(tokenAddress);
       expect(product.receivingAddress).to.equal(reciepient.address);
@@ -90,7 +91,7 @@ describe('Subscription Plugin Tests', function () {
       expect(product.isActive).to.equal(true);
       await expect(txn)
         .to.emit(subscriptionPlugin, 'ProductCreated')
-        .withArgs(product.productId, signer.address, productName, tokenAddress, reciepient.address, chainId, true);
+        .withArgs(product.productId, signer.address, productName, 1, tokenAddress, reciepient.address, chainId, true);
     });
     it('EOA can create plan', async () => {
       const [_, signer] = await hre.ethers.getSigners();
@@ -101,6 +102,7 @@ describe('Subscription Plugin Tests', function () {
         .connect(signer)
         .createProduct(
           hre.ethers.encodeBytes32String('Test Product'),
+          1,
           await token.getAddress(),
           signer.address,
           chainId
@@ -134,6 +136,7 @@ describe('Subscription Plugin Tests', function () {
         .connect(signer)
         .createProduct(
           hre.ethers.encodeBytes32String('Test Product'),
+          1,
           await token.getAddress(),
           signer.address,
           chainId
@@ -145,15 +148,14 @@ describe('Subscription Plugin Tests', function () {
       // Update Product
       const txn1 = await subscriptionPlugin
         .connect(signer)
-        .updateProduct(1, await token.getAddress(), '0xdAC17F958D2ee523a2206206994597C13D831ec7', 3, true);
+        .updateProduct(1, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 3, true);
       const product = await subscriptionPlugin.products(1);
-      expect(product.chargeToken).to.equal(await token.getAddress());
       expect(product.receivingAddress).to.equal('0xdAC17F958D2ee523a2206206994597C13D831ec7');
       expect(product.destinationChain).to.equal(3);
       expect(product.isActive).to.equal(true);
       await expect(txn1)
         .to.emit(subscriptionPlugin, 'ProductUpdated')
-        .withArgs(product.productId, '0xdAC17F958D2ee523a2206206994597C13D831ec7', await token.getAddress(), 3, true);
+        .withArgs(product.productId, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 3, true);
 
       // Update Plan
       //const newPrice = BigInt(50) * BigInt(10) ** (await token.decimals());
@@ -166,13 +168,13 @@ describe('Subscription Plugin Tests', function () {
     });
     it('MSCA can create & Update product', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
-      const funcSig = 'createProduct(bytes32,address,address,uint256)';
-      const types = ['bytes32', 'address', 'address', 'uint256'];
+      const funcSig = 'createProduct(bytes32,uint8,address,address,uint256)';
+      const types = ['bytes32', 'uint8', 'address', 'address', 'uint256'];
       const productName = hre.ethers.encodeBytes32String('Test Product');
       const tokenAddr = await token.getAddress();
       const recvAddr = mscaOwner.address;
       const destChain = chainId;
-      const values = [productName, tokenAddr, recvAddr, destChain];
+      const values = [productName, 1, tokenAddr, recvAddr, destChain];
       const callData = getCallData(funcSig, types, values);
 
       const userOp = {
@@ -200,6 +202,7 @@ describe('Subscription Plugin Tests', function () {
       const expectedCurrentNonce = 2;
       expect(expectedCurrentNonce).to.equal(await subscriptionPlugin.productNonce());
       expect(product.name).to.equal(productName);
+      expect(product.productType).to.equal(1);
       expect(product.provider).to.equal(expectedProvider);
       expect(product.chargeToken).to.equal(tokenAddr);
       expect(product.receivingAddress).to.equal(recvAddr);
@@ -208,7 +211,7 @@ describe('Subscription Plugin Tests', function () {
       expect(product.isActive).to.equal(true);
       await expect(txn)
         .to.emit(subscriptionPlugin, 'ProductCreated')
-        .withArgs(expectedProductId, expectedProvider, productName, tokenAddr, recvAddr, chainId, true);
+        .withArgs(expectedProductId, expectedProvider, productName, 1, tokenAddr, recvAddr, chainId, true);
 
       // Update Product
       const updateProductUserOp = {
@@ -216,9 +219,9 @@ describe('Subscription Plugin Tests', function () {
         nonce: 1,
         initCode: '0x',
         callData: getCallData(
-          'updateProduct(uint256,address,address,uint256,bool)',
-          ['uint256', 'address', 'address', 'uint256', 'bool'],
-          [expectedProductId, await token.getAddress(), beneficiary.address, 10, false]
+          'updateProduct(uint256,address,uint256,bool)',
+          ['uint256', 'address', 'uint256', 'bool'],
+          [expectedProductId, beneficiary.address, 10, false]
         ),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
@@ -239,7 +242,7 @@ describe('Subscription Plugin Tests', function () {
       expect(updatedProduct.isActive).to.equal(false);
       await expect(updateTxn)
         .to.emit(subscriptionPlugin, 'ProductUpdated')
-        .withArgs(product.productId, beneficiary.address, await token.getAddress(), 10, false);
+        .withArgs(product.productId, beneficiary.address, 10, false);
     });
     it('MSCA can create & Update plan', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
@@ -250,9 +253,9 @@ describe('Subscription Plugin Tests', function () {
         nonce: 0,
         initCode: '0x',
         callData: getCallData(
-          'createProduct(bytes32,address,address,uint256)',
-          ['bytes32', 'address', 'address', 'uint256'],
-          [hre.ethers.encodeBytes32String('Test Product'), await token.getAddress(), mscaOwner.address, chainId]
+          'createProduct(bytes32,uint8,address,address,uint256)',
+          ['bytes32', 'uint8', 'address', 'address', 'uint256'],
+          [hre.ethers.encodeBytes32String('Test Product'), 1, await token.getAddress(), mscaOwner.address, chainId]
         ),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
@@ -348,9 +351,9 @@ describe('Subscription Plugin Tests', function () {
         nonce: 0,
         initCode: '0x',
         callData: getCallData(
-          'createProduct(bytes32,address,address,uint256)',
-          ['bytes32', 'address', 'address', 'uint256'],
-          [hre.ethers.encodeBytes32String('Test Product'), await token.getAddress(), mscaOwner.address, chainId]
+          'createProduct(bytes32,uint8,address,address,uint256)',
+          ['bytes32', 'uint8', 'address', 'address', 'uint256'],
+          [hre.ethers.encodeBytes32String('Test Product'), 1, await token.getAddress(), mscaOwner.address, chainId]
         ),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
@@ -399,7 +402,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 2,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 1]),
+        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -421,6 +424,7 @@ describe('Subscription Plugin Tests', function () {
       const afterSubscriptionTokenBal = await token.balanceOf(await mscaAccount.getAddress());
       expect(userSub.product).to.equal(1);
       expect(userSub.subscriptionId).to.equal(0);
+      expect(userSub.endTime).to.equal(0);
       expect(userSub.provider).to.equal(await mscaAccount.getAddress());
       expect(userSub.plan).to.equal(1);
       expect(userSub.lastChargeDate).to.greaterThan(0);
@@ -431,7 +435,7 @@ describe('Subscription Plugin Tests', function () {
       expect(beforeSubscriptionTokenBal - price).to.equal(afterSubscriptionTokenBal);
       await expect(subscribeTxn)
         .to.emit(subscriptionPlugin, 'Subscribed')
-        .withArgs(expectedSubscriber, await mscaAccount.getAddress(), 1, 1, expectedSubId);
+        .withArgs(expectedSubscriber, await mscaAccount.getAddress(), 1, 1, expectedSubId, 0);
       await expect(subscribeTxn)
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
         .withArgs(await mscaAccount.getAddress(), mscaOwner.address, 0, 1, 1, price, userSub.lastChargeDate);
@@ -532,6 +536,7 @@ describe('Subscription Plugin Tests', function () {
         .connect(signer)
         .createProduct(
           hre.ethers.encodeBytes32String('Test Product'),
+          1,
           await token.getAddress(),
           signer.address,
           chainId
@@ -540,6 +545,7 @@ describe('Subscription Plugin Tests', function () {
         .connect(signer)
         .createProduct(
           hre.ethers.encodeBytes32String('Test Product2'),
+          1,
           await token.getAddress(),
           signer.address,
           chainId
@@ -555,7 +561,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 1]),
+        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -632,6 +638,7 @@ describe('Subscription Plugin Tests', function () {
         .connect(signer)
         .createProduct(
           hre.ethers.encodeBytes32String('Test Product'),
+          1,
           await token.getAddress(),
           signer.address,
           chainId
@@ -648,7 +655,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 1]),
+        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,

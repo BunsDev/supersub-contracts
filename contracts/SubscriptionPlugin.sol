@@ -14,9 +14,15 @@ contract SubscriptionPlugin is BasePlugin {
 
     uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
 
+    enum ProductType {
+        RECURRING,
+        SUBSCRIPTION
+    }
+
     struct Product {
         uint256 productId;
         bytes32 name;
+        ProductType productType;
         address provider;
         address chargeToken;
         address receivingAddress;
@@ -37,6 +43,7 @@ contract SubscriptionPlugin is BasePlugin {
         address provider;
         uint256 plan;
         uint256 lastChargeDate;
+        uint256 endTime;
         bool isActive;
     }
 
@@ -53,18 +60,13 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 indexed productId,
         address indexed provider,
         bytes32 name,
+        ProductType productType,
         address chargeToken,
         address receivingAddress,
         uint256 destinationChain,
         bool isActive
     );
-    event ProductUpdated(
-        uint256 indexed productId,
-        address receivingAddress,
-        address chargeToken,
-        uint256 destinationChain,
-        bool isActive
-    );
+    event ProductUpdated(uint256 indexed productId, address receivingAddress, uint256 destinationChain, bool isActive);
     event PlanCreated(
         uint256 indexed productId,
         uint256 indexed planId,
@@ -78,7 +80,8 @@ contract SubscriptionPlugin is BasePlugin {
         address provider,
         uint256 indexed product,
         uint256 indexed plan,
-        uint256 subscriptionId
+        uint256 subscriptionId,
+        uint256 endTime
     );
     event UnSubscribed(address indexed user, uint256 subscriptionId);
     event SubscriptionPlanChanged(address indexed user, uint256 subscriptionId, uint256 planId);
@@ -149,6 +152,7 @@ contract SubscriptionPlugin is BasePlugin {
 
     function createProduct(
         bytes32 _name,
+        ProductType _type,
         address _chargeToken,
         address _receivingAddress,
         uint256 _destinationChain
@@ -157,6 +161,7 @@ contract SubscriptionPlugin is BasePlugin {
             name: _name,
             productId: productNonce,
             provider: msg.sender,
+            productType: _type,
             chargeToken: _chargeToken,
             receivingAddress: _receivingAddress,
             destinationChain: _destinationChain,
@@ -168,6 +173,7 @@ contract SubscriptionPlugin is BasePlugin {
             product.productId,
             msg.sender,
             product.name,
+            _type,
             product.chargeToken,
             product.receivingAddress,
             product.destinationChain,
@@ -196,23 +202,15 @@ contract SubscriptionPlugin is BasePlugin {
 
     function updateProduct(
         uint256 _productId,
-        address _chargeToken,
         address _receivingAddr,
         uint256 _destChain,
         bool _isActive
     ) public productExists(_productId) productBelongsToCaller(_productId) {
         Product storage product = products[_productId];
-        product.chargeToken = _chargeToken;
         product.receivingAddress = _receivingAddr;
         product.destinationChain = _destChain;
         product.isActive = _isActive;
-        emit ProductUpdated(
-            product.productId,
-            product.receivingAddress,
-            product.chargeToken,
-            product.destinationChain,
-            product.isActive
-        );
+        emit ProductUpdated(product.productId, product.receivingAddress, product.destinationChain, product.isActive);
     }
 
     function updatePlan(uint256 _planId, bool _isActive) public planExists(_planId) {
@@ -222,15 +220,16 @@ contract SubscriptionPlugin is BasePlugin {
         emit PlanUpdated(plan.planId, plan.isActive);
     }
 
-    function subscribe(uint256 planId, uint256 productId) public isActivePlan(planId) isActiveProduct(productId) {
+    function subscribe(uint256 planId, uint256 endTime) public isActivePlan(planId) {
         if (msg.sender.code.length == 0) {
             revert("Account is not of smart contract type");
         }
-        if (isSubscribedToProduct(msg.sender, productId)) {
+        Plan memory plan = plans[planId];
+        Product memory product = products[plan.productId];
+        require(plan.isActive && product.isActive, "Plan and product must be active");
+        if (isSubscribedToProduct(msg.sender, plan.productId)) {
             revert("Product subscription already exists");
         }
-        Plan memory plan = plans[planId];
-        Product memory product = products[productId];
         // Charge on first subscription
         executeTransfer(
             plan.price,
@@ -241,21 +240,22 @@ contract SubscriptionPlugin is BasePlugin {
         );
         UserSubscription memory subscription = UserSubscription({
             subscriptionId: subscriptionNonces[msg.sender],
-            product: productId,
+            product: product.productId,
             plan: plan.planId,
             provider: plan.provider,
             isActive: true,
-            lastChargeDate: block.timestamp
+            lastChargeDate: block.timestamp,
+            endTime: endTime
         });
         userSubscriptions[msg.sender][subscription.subscriptionId] = subscription;
         subscriptionNonces[msg.sender] += 1;
-        emit Subscribed(msg.sender, plan.provider, productId, planId, subscription.subscriptionId);
+        emit Subscribed(msg.sender, plan.provider, product.productId, planId, subscription.subscriptionId, endTime);
         emit SubscriptionCharged(
             msg.sender,
             product.receivingAddress,
             subscription.subscriptionId,
             planId,
-            productId,
+            product.productId,
             plan.price,
             subscription.lastChargeDate
         );
@@ -277,17 +277,20 @@ contract SubscriptionPlugin is BasePlugin {
     ) public isActiveProduct(productId) isActivePlan(planId) subscriptionExists(msg.sender, subscriptionId) {
         UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         Plan memory plan = plans[planId];
-        console.log("Here");
         if (subscription.provider != plan.provider) {
             revert("Provider mismatch");
         }
         if (plan.productId != subscription.product) {
             revert("Plan does not belong to current product");
         }
-        console.log("here 2");
         subscription.plan = planId;
         subscription.isActive = true;
         emit SubscriptionPlanChanged(msg.sender, subscriptionId, planId);
+    }
+
+    function changeSubscriptionEndTime(uint256 subscriptionId, uint256 endTime) public {
+        UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
+        subscription.endTime = endTime;
     }
 
     function isSubscribedToProduct(address subscriber, uint256 productId) public view returns (bool) {
@@ -323,6 +326,10 @@ contract SubscriptionPlugin is BasePlugin {
         Plan memory plan = plans[userSubscription.plan];
         Product memory product = products[userSubscription.product];
         require(plan.chargeInterval + userSubscription.lastChargeDate <= block.timestamp, "time Interval not met");
+        require(
+            userSubscription.endTime > block.timestamp || userSubscription.endTime == 0,
+            "subscription end time elapsed"
+        );
         require(product.isActive, "Product is inactive");
         require(plan.isActive, "Plan is inactive");
         executeTransfer(
