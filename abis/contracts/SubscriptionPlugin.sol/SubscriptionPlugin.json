@@ -57,15 +57,15 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "planId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -94,9 +94,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "planId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -113,9 +113,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": true,
@@ -162,9 +162,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -211,21 +211,21 @@
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "product",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "plan",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "Subscribed",
@@ -248,20 +248,32 @@
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "planId",
-        "type": "bytes32"
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
         "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
         "type": "uint256"
       }
     ],
@@ -279,15 +291,15 @@
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "planId",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "SubscriptionPlanChanged",
@@ -304,9 +316,9 @@
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "UnSubscribed",
@@ -367,24 +379,19 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "planId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
+        "type": "uint256"
       }
     ],
     "name": "changeSubscriptionPlan",
@@ -395,29 +402,14 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "planId",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "productId",
-        "type": "bytes32"
-      },
-      {
         "internalType": "address",
         "name": "subscriber",
         "type": "address"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "charge",
@@ -428,9 +420,9 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "_productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "internalType": "uint32",
@@ -515,14 +507,14 @@
       {
         "components": [
           {
-            "internalType": "bytes32",
+            "internalType": "uint256",
             "name": "subscriptionId",
-            "type": "bytes32"
+            "type": "uint256"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "uint256",
             "name": "product",
-            "type": "bytes32"
+            "type": "uint256"
           },
           {
             "internalType": "address",
@@ -530,9 +522,9 @@
             "type": "address"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "uint256",
             "name": "plan",
-            "type": "bytes32"
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -561,9 +553,9 @@
         "type": "address"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "productId",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "isSubscribedToProduct",
@@ -601,6 +593,63 @@
     "name": "onUninstall",
     "outputs": [],
     "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "planNonce",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plans",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "planId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "provider",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "chargeInterval",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1076,14 +1125,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "productNonces",
+    "inputs": [],
+    "name": "productNonce",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1097,71 +1140,17 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
-    "name": "providerPlans",
+    "name": "products",
     "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "productId",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "planId",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
       {
         "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint32",
-        "name": "chargeInterval",
-        "type": "uint32"
-      },
-      {
-        "internalType": "bool",
-        "name": "isActive",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "providerProducts",
-    "outputs": [
-      {
-        "internalType": "bytes32",
         "name": "productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "internalType": "bytes32",
@@ -1187,11 +1176,6 @@
         "internalType": "uint256",
         "name": "destinationChain",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "planNonce",
-        "type": "uint8"
       },
       {
         "internalType": "bool",
@@ -1233,19 +1217,14 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "planId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "productId",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
+        "type": "uint256"
       }
     ],
     "name": "subscribe",
@@ -1294,9 +1273,9 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "unSubscribe",
@@ -1307,9 +1286,9 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "_planId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "internalType": "bool",
@@ -1325,9 +1304,9 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "_productId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "internalType": "address",
@@ -1449,22 +1428,22 @@
         "type": "address"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "name": "userSubscriptions",
     "outputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "subscriptionId",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "product",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "internalType": "address",
@@ -1472,9 +1451,9 @@
         "type": "address"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "plan",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
