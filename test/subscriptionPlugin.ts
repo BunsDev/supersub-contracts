@@ -17,7 +17,6 @@ describe('Subscription Plugin Tests', function () {
 
   async function setUp() {
     const val = 80002;
-    console.log(hre.ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [val]));
     const EntryPointFactory = await hre.ethers.getContractFactory('EntryPoint');
     const TestTokenFactory = await hre.ethers.getContractFactory('TestToken');
     const SubscriptionPluginFactory = await hre.ethers.getContractFactory('SubscriptionPlugin');
@@ -91,7 +90,7 @@ describe('Subscription Plugin Tests', function () {
       expect(product.isActive).to.equal(true);
       await expect(txn)
         .to.emit(subscriptionPlugin, 'ProductCreated')
-        .withArgs(product.productId, signer.address, productName, tokenAddress, chainId, true);
+        .withArgs(product.productId, signer.address, productName, tokenAddress, reciepient.address, chainId, true);
     });
     it('EOA can create plan', async () => {
       const [_, signer] = await hre.ethers.getSigners();
@@ -212,7 +211,7 @@ describe('Subscription Plugin Tests', function () {
       expect(product.isActive).to.equal(true);
       await expect(txn)
         .to.emit(subscriptionPlugin, 'ProductCreated')
-        .withArgs(expectedProductId, expectedProvider, productName, tokenAddr, chainId, true);
+        .withArgs(expectedProductId, expectedProvider, productName, tokenAddr, recvAddr, chainId, true);
 
       // Update Product
       const updateProductUserOp = {
@@ -448,6 +447,15 @@ describe('Subscription Plugin Tests', function () {
           hre.ethers.toBeHex(0, 32),
           hre.ethers.toBeHex(0, 32),
           expectedSubId
+        );
+      await expect(subscribeTxn)
+        .to.emit(subscriptionPlugin, 'SubscriptionCharged')
+        .withArgs(
+          await mscaAccount.getAddress(),
+          mscaOwner.address,
+          hre.ethers.toBeHex(0, 32),
+          hre.ethers.toBeHex(0, 32),
+          price
         );
 
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -724,7 +732,13 @@ describe('Subscription Plugin Tests', function () {
       );
       await expect(chargeTxn)
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
-        .withArgs(await mscaAccount.getAddress(), hre.ethers.toBeHex(0, 32), hre.ethers.toBeHex(0, 32), price);
+        .withArgs(
+          await mscaAccount.getAddress(),
+          signer.address,
+          hre.ethers.toBeHex(0, 32),
+          hre.ethers.toBeHex(0, 32),
+          price
+        );
       // Change plan and test charge
       const changeSubUserOp = {
         sender: await mscaAccount.getAddress(),
@@ -757,7 +771,13 @@ describe('Subscription Plugin Tests', function () {
       );
       await expect(chargeTxn2)
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
-        .withArgs(await mscaAccount.getAddress(), hre.ethers.toBeHex(0, 32), hre.ethers.toBeHex(1, 32), price2);
+        .withArgs(
+          await mscaAccount.getAddress(),
+          signer.address,
+          hre.ethers.toBeHex(0, 32),
+          hre.ethers.toBeHex(1, 32),
+          price2
+        );
     });
   });
 });

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -53,6 +53,7 @@ contract SubscriptionPlugin is BasePlugin {
         address indexed provider,
         bytes32 name,
         address chargeToken,
+        address receivingAddress,
         uint256 destinationChain,
         bool isActive
     );
@@ -82,6 +83,7 @@ contract SubscriptionPlugin is BasePlugin {
     event SubscriptionPlanChanged(address indexed user, bytes32 subscriptionId, bytes32 planId);
     event SubscriptionCharged(
         address indexed subscriber,
+        address recipient,
         bytes32 subscriptionId,
         bytes32 indexed planId,
         uint256 amount
@@ -158,6 +160,7 @@ contract SubscriptionPlugin is BasePlugin {
             msg.sender,
             product.name,
             product.chargeToken,
+            product.receivingAddress,
             product.destinationChain,
             product.isActive
         );
@@ -241,6 +244,7 @@ contract SubscriptionPlugin is BasePlugin {
         userSubscriptions[msg.sender][subscription.subscriptionId] = subscription;
         subscriptionNonces[msg.sender] += 1;
         emit Subscribed(msg.sender, provider, productId, planId, subscription.subscriptionId);
+        emit SubscriptionCharged(msg.sender, product.receivingAddress, subscription.subscriptionId, planId, plan.price);
     }
 
     function unSubscribe(bytes32 subscriptionId) public {
@@ -327,7 +331,7 @@ contract SubscriptionPlugin is BasePlugin {
             product.destinationChain
         );
         userSubscription.lastChargeDate = block.timestamp;
-        emit SubscriptionCharged(subscriber, subscriptionId, planId, plan.price);
+        emit SubscriptionCharged(subscriber, product.receivingAddress, subscriptionId, planId, plan.price);
     }
 
     function getUserSubscriptions(address subscriber) public view returns (UserSubscription[] memory subscriptions) {
