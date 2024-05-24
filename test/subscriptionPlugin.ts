@@ -430,6 +430,9 @@ describe('Subscription Plugin Tests', function () {
       expect(userSub.lastChargeDate).to.greaterThan(0);
       expect(userSub.isActive).to.equal(true);
       expect(subscriptionNonce).to.equal(1);
+      expect(await subscriptionPlugin.subscribedToProduct(await mscaAccount.getAddress(), userSub.product)).to.equal(
+        true
+      );
       // Verify Charge on first subscription
       expect(reciepientBalance).to.equal(price);
       expect(beforeSubscriptionTokenBal - price).to.equal(afterSubscriptionTokenBal);

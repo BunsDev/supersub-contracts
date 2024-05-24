@@ -55,6 +55,7 @@ contract SubscriptionPlugin is BasePlugin {
     mapping(uint256 => Plan) public plans;
     mapping(address => uint256) public subscriptionNonces;
     mapping(address => mapping(uint256 => UserSubscription)) public userSubscriptions;
+    mapping(address => mapping(uint256 => bool)) public subscribedToProduct;
 
     event ProductCreated(
         uint256 indexed productId,
@@ -227,9 +228,7 @@ contract SubscriptionPlugin is BasePlugin {
         Plan memory plan = plans[planId];
         Product memory product = products[plan.productId];
         require(plan.isActive && product.isActive, "Plan and product must be active");
-        if (isSubscribedToProduct(msg.sender, plan.productId)) {
-            revert("Product subscription already exists");
-        }
+        require(!subscribedToProduct[msg.sender][product.productId], "Product subscription already exists");
         // Charge on first subscription
         executeTransfer(
             plan.price,
@@ -249,6 +248,7 @@ contract SubscriptionPlugin is BasePlugin {
         });
         userSubscriptions[msg.sender][subscription.subscriptionId] = subscription;
         subscriptionNonces[msg.sender] += 1;
+        subscribedToProduct[msg.sender][product.productId] = true;
         emit Subscribed(msg.sender, plan.provider, product.productId, planId, subscription.subscriptionId, endTime);
         emit SubscriptionCharged(
             msg.sender,
@@ -291,15 +291,6 @@ contract SubscriptionPlugin is BasePlugin {
     function changeSubscriptionEndTime(uint256 subscriptionId, uint256 endTime) public {
         UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         subscription.endTime = endTime;
-    }
-
-    function isSubscribedToProduct(address subscriber, uint256 productId) public view returns (bool) {
-        for (uint i = 0; i < subscriptionNonces[subscriber]; i++) {
-            if (userSubscriptions[subscriber][i].product == productId) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function executeTransfer(
