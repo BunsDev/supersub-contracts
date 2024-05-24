@@ -131,6 +131,18 @@
       },
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "logoUrl",
+        "type": "string"
+      },
+      {
+        "indexed": false,
         "internalType": "enum SubscriptionPlugin.ProductType",
         "name": "productType",
         "type": "uint8"
@@ -370,6 +382,24 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_chainId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint64",
+        "name": "_selector",
+        "type": "uint64"
+      }
+    ],
+    "name": "addChainSelector",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "admin",
     "outputs": [
@@ -377,6 +407,25 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ccipChainSelectors",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -470,6 +519,16 @@
         "internalType": "bytes32",
         "name": "_name",
         "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_description",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_logoUrl",
+        "type": "string"
       },
       {
         "internalType": "enum SubscriptionPlugin.ProductType",
@@ -1163,11 +1222,6 @@
         "type": "uint256"
       },
       {
-        "internalType": "bytes32",
-        "name": "name",
-        "type": "bytes32"
-      },
-      {
         "internalType": "enum SubscriptionPlugin.ProductType",
         "name": "productType",
         "type": "uint8"
@@ -1225,6 +1279,19 @@
       }
     ],
     "name": "runtimeValidationFunction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_bridgeAddr",
+        "type": "address"
+      }
+    ],
+    "name": "setTokenBridge",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1304,6 +1371,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokenBridge",
+    "outputs": [
+      {
+        "internalType": "contract ITokenBridge",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

@@ -47,6 +47,7 @@
     "@alchemy/aa-alchemy": "^3.14.1",
     "@alchemy/aa-core": "^3.12.3",
     "@chainlink/contracts-ccip": "^1.4.0",
+    "@chainlink/local": "github:smartcontractkit/chainlink-local",
     "@openzeppelin/contracts": "4.9.0",
     "accountabstraction": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ethers": "^6.12.1",

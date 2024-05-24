@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
 import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "modular-account-libs/interfaces/IPlugin.sol";
-import "hardhat/console.sol";
+import { ITokenBridge } from "./interfaces/ITokenBridge.sol";
 
 contract SubscriptionPlugin is BasePlugin {
     string public constant NAME = "Subscription Plugin";
@@ -21,7 +21,6 @@ contract SubscriptionPlugin is BasePlugin {
 
     struct Product {
         uint256 productId;
-        bytes32 name;
         ProductType productType;
         address provider;
         address chargeToken;
@@ -51,6 +50,8 @@ contract SubscriptionPlugin is BasePlugin {
     address public admin;
     uint256 public productNonce;
     uint256 public planNonce;
+    ITokenBridge public tokenBridge;
+    mapping(uint256 => uint64) public ccipChainSelectors;
     mapping(uint256 => Product) public products;
     mapping(uint256 => Plan) public plans;
     mapping(address => uint256) public subscriptionNonces;
@@ -61,6 +62,8 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 indexed productId,
         address indexed provider,
         bytes32 name,
+        string description,
+        string logoUrl,
         ProductType productType,
         address chargeToken,
         address receivingAddress,
@@ -153,13 +156,17 @@ contract SubscriptionPlugin is BasePlugin {
 
     function createProduct(
         bytes32 _name,
+        string calldata _description,
+        string calldata _logoUrl,
         ProductType _type,
         address _chargeToken,
         address _receivingAddress,
         uint256 _destinationChain
     ) public {
+        if (_destinationChain != currentChainId) {
+            require(ccipChainSelectors[_destinationChain] != 0, "destination chain not supported");
+        }
         Product memory product = Product({
-            name: _name,
             productId: productNonce,
             provider: msg.sender,
             productType: _type,
@@ -173,7 +180,9 @@ contract SubscriptionPlugin is BasePlugin {
         emit ProductCreated(
             product.productId,
             msg.sender,
-            product.name,
+            _name,
+            _description,
+            _logoUrl,
             _type,
             product.chargeToken,
             product.receivingAddress,
@@ -207,6 +216,9 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 _destChain,
         bool _isActive
     ) public productExists(_productId) productBelongsToCaller(_productId) {
+        if (_destChain != currentChainId) {
+            require(ccipChainSelectors[_destChain] != 0, "destination chain not supported");
+        }
         Product storage product = products[_productId];
         product.receivingAddress = _receivingAddr;
         product.destinationChain = _destChain;
@@ -229,14 +241,6 @@ contract SubscriptionPlugin is BasePlugin {
         Product memory product = products[plan.productId];
         require(plan.isActive && product.isActive, "Plan and product must be active");
         require(!subscribedToProduct[msg.sender][product.productId], "Product subscription already exists");
-        // Charge on first subscription
-        executeTransfer(
-            plan.price,
-            msg.sender,
-            product.chargeToken,
-            product.receivingAddress,
-            product.destinationChain
-        );
         UserSubscription memory subscription = UserSubscription({
             subscriptionId: subscriptionNonces[msg.sender],
             product: product.productId,
@@ -246,6 +250,16 @@ contract SubscriptionPlugin is BasePlugin {
             lastChargeDate: block.timestamp,
             endTime: endTime
         });
+        // Charge on first subscription
+        _executeTransfer(
+            plan.price,
+            msg.sender,
+            product.chargeToken,
+            product.receivingAddress,
+            product.destinationChain,
+            subscription.subscriptionId,
+            plan.planId
+        );
         userSubscriptions[msg.sender][subscription.subscriptionId] = subscription;
         subscriptionNonces[msg.sender] += 1;
         subscribedToProduct[msg.sender][product.productId] = true;
@@ -293,19 +307,29 @@ contract SubscriptionPlugin is BasePlugin {
         subscription.endTime = endTime;
     }
 
-    function executeTransfer(
+    function _executeTransfer(
         uint256 amount,
         address subscriber,
         address chargeToken,
         address receivingAddress,
-        uint256 destinationChain
-    ) internal {
+        uint256 destinationChain,
+        uint256 subId,
+        uint256 planId
+    ) private {
         bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), amount));
         IPluginExecutor(subscriber).executeFromPluginExternal(chargeToken, 0, callData);
         if (destinationChain == currentChainId) {
             IERC20(chargeToken).transfer(receivingAddress, amount);
         } else {
-            //use CCIP for token transfer instead
+            IERC20(chargeToken).transfer(address(tokenBridge), amount);
+            tokenBridge.transferToken(
+                ccipChainSelectors[destinationChain],
+                receivingAddress,
+                chargeToken,
+                amount,
+                subId,
+                planId
+            );
         }
     }
 
@@ -323,12 +347,14 @@ contract SubscriptionPlugin is BasePlugin {
         );
         require(product.isActive, "Product is inactive");
         require(plan.isActive, "Plan is inactive");
-        executeTransfer(
+        _executeTransfer(
             plan.price,
             subscriber,
             product.chargeToken,
             product.receivingAddress,
-            product.destinationChain
+            product.destinationChain,
+            userSubscription.subscriptionId,
+            plan.planId
         );
         userSubscription.lastChargeDate = block.timestamp;
         emit SubscriptionCharged(
@@ -340,6 +366,14 @@ contract SubscriptionPlugin is BasePlugin {
             plan.price,
             userSubscription.lastChargeDate
         );
+    }
+
+    function setTokenBridge(address _bridgeAddr) public onlyAdmin {
+        tokenBridge = ITokenBridge(_bridgeAddr);
+    }
+
+    function addChainSelector(uint256 _chainId, uint64 _selector) public onlyAdmin {
+        ccipChainSelectors[_chainId] = _selector;
     }
 
     function getUserSubscriptions(address subscriber) public view returns (UserSubscription[] memory subscriptions) {
