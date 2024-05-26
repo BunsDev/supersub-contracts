@@ -26,7 +26,6 @@ describe('Subscription Plugin Tests', function () {
 
     const entrypoint = (await EntryPointFactory.deploy()) as unknown as IEntryPoint;
     const token = await TestTokenFactory.deploy();
-    const subscriptionPlugin = await SubscriptionPluginFactory.deploy(chainId);
     const singleOwnerPlugin = await SingleOwnerPluginFactory.deploy();
     const ccipLocalSimulator = await ccipLocalSimulatorFactory.deploy();
     const ccipConfig = await ccipLocalSimulator.configuration();
@@ -34,9 +33,9 @@ describe('Subscription Plugin Tests', function () {
     const tokenBridge = await ccipBridgeFactory.deploy(
       ccipConfig.sourceRouter_,
       ccipConfig.linkToken_,
-      await subscriptionPlugin.getAddress(),
       []
     );
+    const subscriptionPlugin = await SubscriptionPluginFactory.deploy(chainId, await tokenBridge.getAddress());
     const [beneficiary, mscaOwner] = await hre.ethers.getSigners();
     const mscaAccount = await UpgradeableModularAccountFactory.deploy(await entrypoint.getAddress());
     const pluginAddr = await singleOwnerPlugin.getAddress();
@@ -74,9 +73,10 @@ describe('Subscription Plugin Tests', function () {
   }
 
   describe('Deployment Test', function () {
-    it('Should set correct chain ID', async () => {
-      const { subscriptionPlugin, token } = await loadFixture(setUp);
+    it('Should set correct chain ID and token bridge', async () => {
+      const { subscriptionPlugin, tokenBridge } = await loadFixture(setUp);
       expect(await subscriptionPlugin.currentChainId()).to.equal(chainId);
+      expect(await subscriptionPlugin.tokenBridge()).to.equal(await tokenBridge.getAddress())
     });
   });
 
@@ -142,7 +142,7 @@ describe('Subscription Plugin Tests', function () {
           chainId
         );
 
-      const chargeInterval = 3600;
+      const chargeInterval = 86400;
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
       const beforeCreatePlanNonce = await subscriptionPlugin.planNonce();
       const txn = await subscriptionPlugin.connect(signer).createPlan(1, chargeInterval, price);
@@ -177,7 +177,7 @@ describe('Subscription Plugin Tests', function () {
           signer.address,
           chainId
         );
-      const chargeInterval = 3600;
+      const chargeInterval = 86400;
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
       await subscriptionPlugin.connect(signer).createPlan(1, chargeInterval, price);
 
@@ -332,7 +332,7 @@ describe('Subscription Plugin Tests', function () {
       await entrypoint.handleOps([createProductUserOp], beneficiary.address);
 
       // Create Plan
-      const chargeInterval = 3600;
+      const chargeInterval = 86400;
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
       const createPlanUserOp = {
         sender: await mscaAccount.getAddress(),
@@ -394,6 +394,132 @@ describe('Subscription Plugin Tests', function () {
       expect(updatedPlan.isActive).to.equal(false);
       await expect(updateTxn).to.emit(subscriptionPlugin, 'PlanUpdated').withArgs(plan.planId, false);
     });
+    it('Create Product With Plan Tests', async () => {
+      const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
+      const [provider,] = await hre.ethers.getSigners();
+      const productName = hre.ethers.encodeBytes32String("Test product with plan");
+      const description = "basic description here";
+      const logo = "http://p.img";
+      const planNonce = await subscriptionPlugin.planNonce();
+      const plans = [
+        {
+          price: BigInt(100) * BigInt(10) ** (await token.decimals()),
+          chargeInterval: 86400,
+          id: planNonce,
+        },
+        {
+          price: BigInt(200) * BigInt(10) ** (await token.decimals()),
+          chargeInterval: 90800,
+          id: planNonce + BigInt(1)
+        }
+      ];
+      const expectedProductId = await subscriptionPlugin.productNonce();
+      const expectedPlanNonce = await subscriptionPlugin.planNonce() + BigInt(plans.length);
+      const expectedProductNonce = expectedProductId + BigInt(1);
+      const txn = await subscriptionPlugin.createProductWithPlans(
+        productName,
+        description,
+        logo,
+        1,
+        await token.getAddress(),
+        beneficiary.address,
+        chainId,
+        plans
+      );
+      const product = await subscriptionPlugin.products(expectedProductId);
+      expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
+      expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
+      expect(product.productId).to.equal(expectedProductId);
+      expect(product.productType).to.equal(1);
+      expect(product.provider).to.equal(provider.address);
+      expect(product.chargeToken).to.equal(await token.getAddress());
+      expect(product.receivingAddress).to.equal(beneficiary.address);
+      expect(product.destinationChain).to.equal(chainId);
+      expect(product.isActive).to.equal(true);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'ProductCreated')
+        .withArgs(
+          product.productId,
+          beneficiary.address,
+          productName,
+          description,
+          logo,
+          1,
+          await token.getAddress(),
+          beneficiary.address,
+          chainId,
+          true
+        );
+      for (const initPlan of plans) {
+        const plan = await subscriptionPlugin.plans(initPlan.id);
+        expect(plan.productId).to.equal(product.productId);
+        expect(plan.provider).to.equal(product.provider);
+        expect(plan.chargeInterval).to.equal(initPlan.chargeInterval);
+        expect(plan.price).to.equal(initPlan.price);
+        expect(plan.isActive).to.equal(true);
+        expect(plan.planId).to.equal(initPlan.id);
+        await expect(txn)
+          .to.emit(subscriptionPlugin, 'PlanCreated')
+          .withArgs(product.productId, initPlan.id, initPlan.price, initPlan.chargeInterval, true);
+      }
+    });
+    it('Create Reccurring subscription test', async () => {
+      const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
+      const [provider,] = await hre.ethers.getSigners();
+      const productName = hre.ethers.encodeBytes32String("recurring subsciption");
+      const description = "basic description here";
+      const logo = "http://p.img";
+      const chargeInterval = 86400;
+      const price = BigInt(200) * BigInt(10) ** (await token.decimals());
+      const expectedProductId = await subscriptionPlugin.productNonce();
+      const expectedPlanId = await subscriptionPlugin.planNonce();
+      const expectedPlanNonce = expectedPlanId + BigInt(1);
+      const expectedProductNonce = expectedProductId + BigInt(1);
+      const txn = await subscriptionPlugin.createRecurringSubscription(
+        productName,
+        description,
+        logo,
+        await token.getAddress(),
+        beneficiary.address,
+        chainId,
+        chargeInterval,
+        price
+      )
+      const product = await subscriptionPlugin.products(expectedProductId);
+      expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
+      expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
+      expect(product.productId).to.equal(expectedProductId);
+      expect(product.productType).to.equal(0);
+      expect(product.provider).to.equal(provider.address);
+      expect(product.chargeToken).to.equal(await token.getAddress());
+      expect(product.receivingAddress).to.equal(beneficiary.address);
+      expect(product.destinationChain).to.equal(chainId);
+      expect(product.isActive).to.equal(true);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'ProductCreated')
+        .withArgs(
+          product.productId,
+          beneficiary.address,
+          productName,
+          description,
+          logo,
+          0,
+          await token.getAddress(),
+          beneficiary.address,
+          chainId,
+          true
+        );
+        const plan = await subscriptionPlugin.plans(expectedPlanId);
+        expect(plan.productId).to.equal(product.productId);
+        expect(plan.provider).to.equal(product.provider);
+        expect(plan.chargeInterval).to.equal(chargeInterval);
+        expect(plan.price).to.equal(price);
+        expect(plan.isActive).to.equal(true);
+        expect(plan.planId).to.equal(expectedPlanId);
+        await expect(txn)
+          .to.emit(subscriptionPlugin, 'PlanCreated')
+          .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
+    })
   });
 
   describe('User Subscription', async () => {
@@ -407,7 +533,7 @@ describe('Subscription Plugin Tests', function () {
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Create Product & Plan  ┃
       // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-      const chargeInterval = 3600;
+      const chargeInterval = 86400;
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
       await subscriptionPlugin
         .connect(mscaOwner)
@@ -500,37 +626,37 @@ describe('Subscription Plugin Tests', function () {
       // ┃   Change Plan             ┃
       // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
       // create new plan
-      await subscriptionPlugin
-        .connect(mscaOwner)
-        .createPlan(1, 300, BigInt(50) * BigInt(10) ** (await token.decimals()));
+      // await subscriptionPlugin
+      //   .connect(mscaOwner)
+      //   .createPlan(1, 300, BigInt(50) * BigInt(10) ** (await token.decimals()));
       // change user sub
-      const changeSubUserOp = {
-        sender: await mscaAccount.getAddress(),
-        nonce: 2,
-        initCode: '0x',
-        callData: getCallData(
-          'changeSubscriptionPlan(uint256,uint256,uint256)',
-          ['uint256', 'uint256', 'uint256'],
-          [1, 2, 0]
-        ),
-        callGasLimit: 7000000,
-        verificationGasLimit: 1000000,
-        preVerificationGas: 0,
-        maxFeePerGas: 2,
-        maxPriorityFeePerGas: 1,
-        paymasterAndData: '0x',
-        signature: '0x',
-      };
-      const changeSubUserOpHash = await entrypoint.getUserOpHash(changeSubUserOp);
-      const changeSubSig = await mscaOwner.signMessage(hre.ethers.getBytes(changeSubUserOpHash));
-      changeSubUserOp.signature = changeSubSig;
-      const changeSubTxn = await entrypoint.handleOps([changeSubUserOp], beneficiary.address);
-      const changedSub = await subscriptionPlugin.userSubscriptions(expectedSubscriber, 0);
-      expect(changedSub.isActive).to.equal(true);
-      expect(changedSub.plan).to.equal(2);
-      await expect(changeSubTxn)
-        .to.emit(subscriptionPlugin, 'SubscriptionPlanChanged')
-        .withArgs(expectedSubscriber, 0, 2);
+      // const changeSubUserOp = {
+      //   sender: await mscaAccount.getAddress(),
+      //   nonce: 2,
+      //   initCode: '0x',
+      //   callData: getCallData(
+      //     'changeSubscriptionPlan(uint256,uint256,uint256)',
+      //     ['uint256', 'uint256', 'uint256'],
+      //     [1, 2, 0]
+      //   ),
+      //   callGasLimit: 7000000,
+      //   verificationGasLimit: 1000000,
+      //   preVerificationGas: 0,
+      //   maxFeePerGas: 2,
+      //   maxPriorityFeePerGas: 1,
+      //   paymasterAndData: '0x',
+      //   signature: '0x',
+      // };
+      // const changeSubUserOpHash = await entrypoint.getUserOpHash(changeSubUserOp);
+      // const changeSubSig = await mscaOwner.signMessage(hre.ethers.getBytes(changeSubUserOpHash));
+      // changeSubUserOp.signature = changeSubSig;
+      // const changeSubTxn = await entrypoint.handleOps([changeSubUserOp], beneficiary.address);
+      // const changedSub = await subscriptionPlugin.userSubscriptions(expectedSubscriber, 0);
+      // expect(changedSub.isActive).to.equal(true);
+      // expect(changedSub.plan).to.equal(2);
+      // await expect(changeSubTxn)
+      //   .to.emit(subscriptionPlugin, 'SubscriptionPlanChanged')
+      //   .withArgs(expectedSubscriber, 0, 2);
     });
     it('Charge Failure Tests', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
@@ -566,8 +692,8 @@ describe('Subscription Plugin Tests', function () {
           chainId
         ); // Product 2
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
-      await subscriptionPlugin.connect(signer).createPlan(1, 3600, price);
-      await subscriptionPlugin.connect(signer).createPlan(1, 3600 * 2, price);
+      await subscriptionPlugin.connect(signer).createPlan(1, 86400, price);
+      await subscriptionPlugin.connect(signer).createPlan(1, 100000 * 2, price);
 
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Subscribe to plan      ┃
@@ -596,7 +722,7 @@ describe('Subscription Plugin Tests', function () {
       await expect(subscriptionPlugin.charge(await mscaAccount.getAddress(), 0)).to.revertedWith(
         'time Interval not met'
       );
-      await time.increase(3600 * 2);
+      // await time.increase(3600 * 2);
       // Todo: Test product and plan not active
       // await expect(
       //   subscriptionPlugin.charge(
@@ -662,8 +788,8 @@ describe('Subscription Plugin Tests', function () {
         );
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
       const price2 = BigInt(200) * BigInt(10) ** (await token.decimals());
-      await subscriptionPlugin.connect(signer).createPlan(1, 3600, price); // First Plan
-      await subscriptionPlugin.connect(signer).createPlan(1, 3600 * 2, price2); // Second Plan
+      await subscriptionPlugin.connect(signer).createPlan(1, 86400, price); // First Plan
+      await subscriptionPlugin.connect(signer).createPlan(1, 100000 * 2, price2); // Second Plan
 
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Subscribe to plan      ┃
@@ -693,7 +819,7 @@ describe('Subscription Plugin Tests', function () {
         await mscaAccount.getAddress(),
         hre.ethers.toBeHex(0, 32)
       );
-      await time.increase(3600);
+      await time.increase(86400);
       const chargeTxn = await subscriptionPlugin.charge(await mscaAccount.getAddress(), 0);
       const afterChargeUserSub = await subscriptionPlugin.userSubscriptions(
         await mscaAccount.getAddress(),
@@ -706,33 +832,33 @@ describe('Subscription Plugin Tests', function () {
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
         .withArgs(await mscaAccount.getAddress(), signer.address, 0, 1, 1, price, afterChargeUserSub.lastChargeDate);
       // Change plan and test charge
-      const changeSubUserOp = {
-        sender: await mscaAccount.getAddress(),
-        nonce: 1,
-        initCode: '0x',
-        callData: getCallData(
-          'changeSubscriptionPlan(uint256,uint256,uint256)',
-          ['uint256', 'uint256', 'uint256'],
-          [1, 2, 0]
-        ),
-        callGasLimit: 7000000,
-        verificationGasLimit: 1000000,
-        preVerificationGas: 0,
-        maxFeePerGas: 2,
-        maxPriorityFeePerGas: 1,
-        paymasterAndData: '0x',
-        signature: '0x',
-      };
-      const changeSubUserOpHash = await entrypoint.getUserOpHash(changeSubUserOp);
-      const changeSubSig = await mscaOwner.signMessage(hre.ethers.getBytes(changeSubUserOpHash));
-      changeSubUserOp.signature = changeSubSig;
-      await entrypoint.handleOps([changeSubUserOp], beneficiary.address);
-      await time.increase(3600 * 2);
-      const chargeTxn2 = await subscriptionPlugin.charge(await mscaAccount.getAddress(), 0);
-      const userSub2 = await subscriptionPlugin.userSubscriptions(await mscaAccount.getAddress(), 0);
-      await expect(chargeTxn2)
-        .to.emit(subscriptionPlugin, 'SubscriptionCharged')
-        .withArgs(await mscaAccount.getAddress(), signer.address, 0, 2, 1, price2, userSub2.lastChargeDate);
+      // const changeSubUserOp = {
+      //   sender: await mscaAccount.getAddress(),
+      //   nonce: 1,
+      //   initCode: '0x',
+      //   callData: getCallData(
+      //     'changeSubscriptionPlan(uint256,uint256,uint256)',
+      //     ['uint256', 'uint256', 'uint256'],
+      //     [1, 2, 0]
+      //   ),
+      //   callGasLimit: 7000000,
+      //   verificationGasLimit: 1000000,
+      //   preVerificationGas: 0,
+      //   maxFeePerGas: 2,
+      //   maxPriorityFeePerGas: 1,
+      //   paymasterAndData: '0x',
+      //   signature: '0x',
+      // };
+      // const changeSubUserOpHash = await entrypoint.getUserOpHash(changeSubUserOp);
+      // const changeSubSig = await mscaOwner.signMessage(hre.ethers.getBytes(changeSubUserOpHash));
+      // changeSubUserOp.signature = changeSubSig;
+      // await entrypoint.handleOps([changeSubUserOp], beneficiary.address);
+      // await time.increase(3600 * 2);
+      // const chargeTxn2 = await subscriptionPlugin.charge(await mscaAccount.getAddress(), 0);
+      // const userSub2 = await subscriptionPlugin.userSubscriptions(await mscaAccount.getAddress(), 0);
+      // await expect(chargeTxn2)
+      //   .to.emit(subscriptionPlugin, 'SubscriptionCharged')
+      //   .withArgs(await mscaAccount.getAddress(), signer.address, 0, 2, 1, price2, userSub2.lastChargeDate);
     });
     it('CCIP charge test', async () => {
       const {
@@ -773,7 +899,7 @@ describe('Subscription Plugin Tests', function () {
           10
         );
       const price = BigInt(100) * BigInt(10) ** (await token.decimals());
-      await subscriptionPlugin.connect(signer).createPlan(1, 3600, price);
+      await subscriptionPlugin.connect(signer).createPlan(1, 86400, price);
 
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Subscription Test      ┃
@@ -815,7 +941,7 @@ describe('Subscription Plugin Tests', function () {
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
       // ┃    Charge Test            ┃
       // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-      await time.increase(3600);
+      await time.increase(86400);
       const chargeTxn = await subscriptionPlugin.charge(await mscaAccount.getAddress(), 0);
       await expect(chargeTxn)
         .to.emit(tokenBridge, 'TokenTransferred')

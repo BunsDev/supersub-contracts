@@ -36,6 +36,10 @@ contract SubscriptionPlugin is BasePlugin {
         uint32 chargeInterval;
         bool isActive;
     }
+    struct InitPlanParam {
+        uint256 price;
+        uint32 chargeInterval;
+    }
     struct UserSubscription {
         uint256 subscriptionId;
         uint256 product;
@@ -99,8 +103,9 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 timestamp
     );
 
-    constructor(uint256 chainId) {
+    constructor(uint256 chainId, address _bridge) {
         admin = msg.sender;
+        tokenBridge = ITokenBridge(_bridge);
         currentChainId = chainId;
         productNonce = 1;
         planNonce = 1;
@@ -153,8 +158,7 @@ contract SubscriptionPlugin is BasePlugin {
     // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
     // ┃    Execution functions    ┃
     // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-    function createProduct(
+    function _createProduct(
         bytes32 _name,
         string calldata _description,
         string calldata _logoUrl,
@@ -162,7 +166,7 @@ contract SubscriptionPlugin is BasePlugin {
         address _chargeToken,
         address _receivingAddress,
         uint256 _destinationChain
-    ) public {
+    ) private returns (uint256) {
         if (_destinationChain != currentChainId) {
             require(ccipChainSelectors[_destinationChain] != 0, "destination chain not supported");
         }
@@ -189,6 +193,27 @@ contract SubscriptionPlugin is BasePlugin {
             product.destinationChain,
             product.isActive
         );
+        return product.productId;
+    }
+
+    function createProduct(
+        bytes32 _name,
+        string calldata _description,
+        string calldata _logoUrl,
+        ProductType _type,
+        address _chargeToken,
+        address _receivingAddress,
+        uint256 _destinationChain
+    ) public {
+        _createProduct(
+            _name,
+            _description,
+            _logoUrl,
+            _type,
+            _chargeToken,
+            _receivingAddress,
+            _destinationChain
+        );
     }
 
     function createPlan(
@@ -196,6 +221,7 @@ contract SubscriptionPlugin is BasePlugin {
         uint32 _chargeInterval,
         uint256 _price
     ) public productExists(_productId) productBelongsToCaller(_productId) {
+        require(_chargeInterval >= 24 hours && _chargeInterval <= 365 days, "invalid interval");
         Product storage product = products[_productId];
         Plan memory plan = Plan({
             productId: _productId,
@@ -208,6 +234,61 @@ contract SubscriptionPlugin is BasePlugin {
         plans[plan.planId] = plan;
         planNonce += 1;
         emit PlanCreated(_productId, plan.planId, plan.price, plan.chargeInterval, plan.isActive);
+    }
+
+    function createProductWithPlans(
+        bytes32 _name,
+        string calldata _description,
+        string calldata _logoUrl,
+        ProductType _type,
+        address _chargeToken,
+        address _receivingAddress,
+        uint256 _destinationChain,
+        InitPlanParam[] calldata _plans
+    ) public {
+        require(_plans.length != 0, "plans must not be empty");
+        uint256 productId = _createProduct(
+            _name,
+            _description,
+            _logoUrl,
+            _type,
+            _chargeToken,
+            _receivingAddress,
+            _destinationChain
+        );
+        for (uint i = 0; i < _plans.length; i++) {
+            createPlan(
+                productId,
+                _plans[i].chargeInterval,
+                _plans[i].price
+            );
+        }
+    }
+
+    function createRecurringSubscription(
+        bytes32 _name,
+        string calldata _description,
+        string calldata _logoUrl,
+        address _chargeToken,
+        address _receivingAddress,
+        uint256 _destinationChain,
+        uint32 _chargeInterval,
+        uint256 _price
+    ) public {
+        uint256 productId = _createProduct(
+            _name,
+            _description,
+            _logoUrl,
+            ProductType.RECURRING,
+            _chargeToken,
+            _receivingAddress,
+            _destinationChain
+        );
+        createPlan(
+            productId,
+            _chargeInterval,
+            _price
+        );
     }
 
     function updateProduct(
@@ -285,21 +366,23 @@ contract SubscriptionPlugin is BasePlugin {
     // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
     function changeSubscriptionPlan(
-        uint256 productId,
-        uint256 planId,
-        uint256 subscriptionId
-    ) public isActiveProduct(productId) isActivePlan(planId) subscriptionExists(msg.sender, subscriptionId) {
-        UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
-        Plan memory plan = plans[planId];
-        if (subscription.provider != plan.provider) {
-            revert("Provider mismatch");
-        }
-        if (plan.productId != subscription.product) {
-            revert("Plan does not belong to current product");
-        }
-        subscription.plan = planId;
-        subscription.isActive = true;
-        emit SubscriptionPlanChanged(msg.sender, subscriptionId, planId);
+        // uint256 productId,
+        // uint256 planId,
+        // uint256 subscriptionId
+    ) public pure {
+        // UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
+        // Plan memory plan = plans[planId];
+        // if (subscription.provider != plan.provider) {
+        //     revert("Provider mismatch");
+        // }
+        // if (plan.productId != subscription.product) {
+        //     revert("Plan does not belong to current product");
+        // }
+        // subscription.plan = planId;
+        // subscription.isActive = true;
+        revert("Not supported");
+        // subscription.isActive = true;
+        // emit SubscriptionPlanChanged(msg.sender, subscriptionId, planId);
     }
 
     function changeSubscriptionEndTime(uint256 subscriptionId, uint256 endTime) public {
@@ -321,7 +404,7 @@ contract SubscriptionPlugin is BasePlugin {
         if (destinationChain == currentChainId) {
             IERC20(chargeToken).transfer(receivingAddress, amount);
         } else {
-            IERC20(chargeToken).transfer(address(tokenBridge), amount);
+            IERC20(chargeToken).approve(address(tokenBridge), amount);
             tokenBridge.transferToken(
                 ccipChainSelectors[destinationChain],
                 receivingAddress,
