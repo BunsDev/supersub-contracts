@@ -13,7 +13,6 @@ import { IUniswapV3Factory } from "./interfaces/IUniswapV3Factory.sol";
 import { ISwapRouter } from "./interfaces/IUniswapV3Router.sol";
 import { ITokenBridge } from "./interfaces/ITokenBridge.sol";
 
-
 /// @title Counter Plugin
 /// @author Your name
 /// @notice This plugin lets increment a count!
@@ -56,12 +55,12 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         SUBSCRIPTION
     }
 
-     struct Product {
+    struct Product {
         ProductType productType;
         address provider;
         bool isActive;
         uint256 productId;
-     }
+    }
 
     struct SubscriptionPlan {
         uint256 planId;
@@ -83,7 +82,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         bool isActive;
     }
 
-    struct UserSubscriptionParams{
+    struct UserSubscriptionParams {
         uint256 price;
         uint256 chargeInterval;
         address tokenAddress;
@@ -97,38 +96,33 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
     mapping(address => mapping(uint256 => UserSubscription)) public subscriptionStatuses;
     mapping(uint256 => uint64) public ccipChainSelectors;
 
-
-
-    event ProductCreated(uint256 productId,bytes32 name,address indexed provider,ProductType indexed productType,string logoURL, string description);
-    event ProductUpdated(uint256 productId,address indexed provider,bool isActive);
+    event ProductCreated(
+        uint256 productId,
+        bytes32 name,
+        address indexed provider,
+        ProductType indexed productType,
+        string logoURL,
+        string description
+    );
+    event ProductUpdated(uint256 productId, address indexed provider, bool isActive);
 
     event PlanCreated(
         uint256 planId,
         uint256 indexed productId,
         uint256 price,
         uint256 chargeInterval,
-        address  tokenAddress,
-        address  receivingAddress,
+        address tokenAddress,
+        address receivingAddress,
         uint256 destinationChain
     );
-    event PlanUpdated(
-        uint256 indexed planId,
-        address receivingAddress,
-        uint256 destinationChain,
-        bool isActive
-    );
-     event PlanSubscribed(uint256 indexed planId, address indexed subscriber, address  paymentToken, uint256 endTime);
-     event PlanUnsubscribed(uint256 indexed planId, address indexed subscriber);
-     event UserSubscriptionChanged(
-        uint256 planId,
-        address indexed subscriber,
-        address  paymentToken,
-        uint256 endTime
-    );
+    event PlanUpdated(uint256 indexed planId, address receivingAddress, uint256 destinationChain, bool isActive);
+    event PlanSubscribed(uint256 indexed planId, address indexed subscriber, address paymentToken, uint256 endTime);
+    event PlanUnsubscribed(uint256 indexed planId, address indexed subscriber);
+    event UserSubscriptionChanged(uint256 planId, address indexed subscriber, address paymentToken, uint256 endTime);
     event SubscriptionCharged(
         uint256 indexed planId,
         address indexed subscriber,
-        address  paymentToken,
+        address paymentToken,
         uint256 paymentTokenAmount
     );
 
@@ -149,12 +143,12 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         }
     }
 
-     modifier productExists(uint256 productId) {
+    modifier productExists(uint256 productId) {
         require(productId < numProducts, "Product does not exist");
         _;
     }
 
-     modifier isActiveProduct(uint256 productId) {
+    modifier isActiveProduct(uint256 productId) {
         Product memory product = products[productId];
         require(product.isActive, "Product not active");
         _;
@@ -180,14 +174,14 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
 
     modifier isProductProviderr(uint256 productId, address caller) {
         Product memory product = products[productId];
-        require(product.provider==caller,"Caller not provider");
+        require(product.provider == caller, "Caller not provider");
         _;
     }
 
     modifier isPlanProvider(uint256 planId, address caller) {
         SubscriptionPlan memory plan = subscriptionPlans[planId];
         Product memory product = products[plan.productId];
-        require(product.provider==caller,"Caller not provider");
+        require(product.provider == caller, "Caller not provider");
         _;
     }
 
@@ -221,17 +215,28 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         numProducts += 1;
         emit ProductCreated(product.productId, name, msg.sender, productType, logoURL, description);
         for (uint i = 0; i < initPlans.length; i++) {
-            UserSubscriptionParams memory initPlan=initPlans[i];
-            createSubscriptionPlan(product.productId, initPlan.price, initPlan.chargeInterval, initPlan.tokenAddress, initPlan.receivingAddress, initPlan.destinationChain);
+            UserSubscriptionParams memory initPlan = initPlans[i];
+            createSubscriptionPlan(
+                product.productId,
+                initPlan.price,
+                initPlan.chargeInterval,
+                initPlan.tokenAddress,
+                initPlan.receivingAddress,
+                initPlan.destinationChain
+            );
         }
     }
 
-    function updateProduct(uint256 productId,address provider,bool isActive)productExists(productId) isProductProviderr(productId, msg.sender) public {
-     Product storage product=products[productId];
-     product.provider=provider;
-     product.isActive=isActive;
-   
-     emit ProductUpdated(productId, provider ,isActive);
+    function updateProduct(
+        uint256 productId,
+        address provider,
+        bool isActive
+    ) public productExists(productId) isProductProviderr(productId, msg.sender) {
+        Product storage product = products[productId];
+        product.provider = provider;
+        product.isActive = isActive;
+
+        emit ProductUpdated(productId, provider, isActive);
     }
 
     function createSubscriptionPlan(
@@ -241,14 +246,14 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         address tokenAddress,
         address receivingAddress,
         uint256 destinationChain
-    ) productExists(productId) isActiveProduct(productId) isProductProviderr(productId, msg.sender) public {
+    ) public productExists(productId) isActiveProduct(productId) isProductProviderr(productId, msg.sender) {
         require(chargeInterval < block.timestamp, "Invalid charge Interval ");
-         if (destinationChain != currentChainId) {
+        if (destinationChain != currentChainId) {
             require(ccipChainSelectors[destinationChain] != 0, "destination chain not supported");
             require(supportedBridgingTokens[tokenAddress], "token specified is not supported");
         }
         SubscriptionPlan memory plan = SubscriptionPlan({
-            productId:productId,
+            productId: productId,
             planId: numSubscriptionPlans,
             price: price,
             chargeInterval: chargeInterval,
@@ -269,7 +274,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         );
         numSubscriptionPlans++;
     }
-  
+
     function updateSubscriptionPlan(
         uint256 planId,
         address receivingAddress,
@@ -279,7 +284,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         SubscriptionPlan storage plan = subscriptionPlans[planId];
         plan.receivingAddress = receivingAddress;
         plan.destinationChain = destinationChain;
-        plan.isActive=isActive;
+        plan.isActive = isActive;
         emit PlanUpdated(planId, receivingAddress, destinationChain, isActive);
     }
 
@@ -292,7 +297,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         if (isSubscribedToPlan(planId, msg.sender)) {
             revert("User already subscribed to plan");
         }
-        require(endTime==0||endTime>block.timestamp,"Invalid end time provided");
+        require(endTime == 0 || endTime > block.timestamp, "Invalid end time provided");
 
         SubscriptionPlan memory plan = subscriptionPlans[planId];
         if (plan.tokenAddress != paymentToken) {
@@ -319,22 +324,35 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         emit PlanSubscribed(planId, msg.sender, userSubscription.paymentToken, userSubscription.endTime);
     }
 
-      function createRecurringPayment(uint256 productId, UserSubscriptionParams memory initPlan, uint256 endTime,address paymentToken,uint24 paymentTokenSwapFee)public{
-        uint256 recurringProductId=productId;
+    function createRecurringPayment(
+        uint256 productId,
+        UserSubscriptionParams memory initPlan,
+        uint256 endTime,
+        address paymentToken,
+        uint24 paymentTokenSwapFee
+    ) public {
+        uint256 recurringProductId = productId;
         UserSubscriptionParams[] memory nullPlan;
-        if(recurringProductId>=numProducts){
-            recurringProductId=numProducts;
-            createProduct("Supersub", "Self Recurring Payment","supersub.jpg", ProductType.RECURRING ,nullPlan);
+        if (recurringProductId >= numProducts) {
+            recurringProductId = numProducts;
+            createProduct("Supersub", "Self Recurring Payment", "supersub.jpg", ProductType.RECURRING, nullPlan);
         }
-        Product memory recurringProduct=products[recurringProductId];
-        require(recurringProduct.productType==ProductType.RECURRING,"Product is not of recurring type");
-        require(recurringProduct.provider==msg.sender,"Recurring Product not belonging to user");
-        createSubscriptionPlan(recurringProductId, initPlan.price, initPlan.chargeInterval, initPlan.tokenAddress, initPlan.receivingAddress, initPlan.destinationChain);
+        Product memory recurringProduct = products[recurringProductId];
+        require(recurringProduct.productType == ProductType.RECURRING, "Product is not of recurring type");
+        require(recurringProduct.provider == msg.sender, "Recurring Product not belonging to user");
+        createSubscriptionPlan(
+            recurringProductId,
+            initPlan.price,
+            initPlan.chargeInterval,
+            initPlan.tokenAddress,
+            initPlan.receivingAddress,
+            initPlan.destinationChain
+        );
         //subscribe to latest plan created
-        subscribe(numSubscriptionPlans-1, endTime, paymentToken, paymentTokenSwapFee);
+        subscribe(numSubscriptionPlans - 1, endTime, paymentToken, paymentTokenSwapFee);
     }
 
-     function updateUserSubscription(
+    function updateUserSubscription(
         uint256 planId,
         uint256 endTime,
         address paymentToken,
@@ -374,63 +392,61 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         UserSubscription storage userSubscription = subscriptionStatuses[subscriber][planId];
         require(block.timestamp - userSubscription.lastChargeDate >= plan.chargeInterval, "time Interval not met");
         require(userSubscription.startTime <= block.timestamp, "subscription is yet to start");
-        require(userSubscription.endTime==0||userSubscription.endTime >= block.timestamp, "subscription has ended");
+        require(userSubscription.endTime == 0 || userSubscription.endTime >= block.timestamp, "subscription has ended");
         userSubscription.lastChargeDate = block.timestamp;
         uint256 val = 0;
 
         if (plan.tokenAddress == userSubscription.paymentToken) {
-               if(plan.tokenAddress==address(0)){
-                    IPluginExecutor(subscriber).executeFromPluginExternal(address(this), plan.price, "");
-               }else{
-                    bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), plan.price));
-                    IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, callData);
-               }
-        
+            if (plan.tokenAddress == address(0)) {
+                IPluginExecutor(subscriber).executeFromPluginExternal(address(this), plan.price, "");
+            } else {
+                bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), plan.price));
+                IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, callData);
+            }
         } else {
-               address tokenA = userSubscription.paymentToken;
-               address tokenB = plan.tokenAddress;
-               uint256 tokenBalance;
-               if (userSubscription.paymentToken == address(0)) {
-                    tokenA = WETH;
-                    tokenBalance = address(subscriber).balance;
-                    val = tokenBalance;
-               } else {
-                    tokenBalance = IERC20(plan.tokenAddress).balanceOf(subscriber);
-               }
-               if (plan.tokenAddress == address(0)) {
-                    tokenB = WETH;
-               }
-               bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance)); //try to swap with all of balance first
-               IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
-               bytes memory callData = getSwapCallData(
-                    tokenA,
-                    tokenB,
-                    userSubscription.paymentTokenSwapFee,
-                    address(this),
-                    plan.price,
-                    tokenBalance
-               );
-               bytes memory returnData = IPluginExecutor(subscriber).executeFromPluginExternal(
-                    address(swapRouter),
-                    val,
-                    callData
-               );
-               val = abi.decode(returnData, (uint256));
-               approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), 0)); //set approval back to 0
-               IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
-               if(tokenB==WETH){
-                    IWETH(WETH).withdraw(plan.price);
-               }
+            address tokenA = userSubscription.paymentToken;
+            address tokenB = plan.tokenAddress;
+            uint256 tokenBalance;
+            if (userSubscription.paymentToken == address(0)) {
+                tokenA = WETH;
+                tokenBalance = address(subscriber).balance;
+                val = tokenBalance;
+            } else {
+                tokenBalance = IERC20(plan.tokenAddress).balanceOf(subscriber);
+            }
+            if (plan.tokenAddress == address(0)) {
+                tokenB = WETH;
+            }
+            bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance)); //try to swap with all of balance first
+            IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
+            bytes memory callData = getSwapCallData(
+                tokenA,
+                tokenB,
+                userSubscription.paymentTokenSwapFee,
+                address(this),
+                plan.price,
+                tokenBalance
+            );
+            bytes memory returnData = IPluginExecutor(subscriber).executeFromPluginExternal(
+                address(swapRouter),
+                val,
+                callData
+            );
+            val = abi.decode(returnData, (uint256));
+            approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), 0)); //set approval back to 0
+            IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
+            if (tokenB == WETH) {
+                IWETH(WETH).withdraw(plan.price);
+            }
         }
-          if (plan.destinationChain == currentChainId) {
-               if(plan.tokenAddress==address(0)){
-                    payable(plan.receivingAddress).call{value:plan.price}("");
-               }else{
-                    IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
-               }
-       
+        if (plan.destinationChain == currentChainId) {
+            if (plan.tokenAddress == address(0)) {
+                payable(plan.receivingAddress).call{ value: plan.price }("");
+            } else {
+                IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
+            }
         } else {
-             tokenBridge.transferToken(
+            tokenBridge.transferToken(
                 ccipChainSelectors[plan.destinationChain],
                 plan.receivingAddress,
                 plan.tokenAddress,
@@ -445,7 +461,8 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
 
     function isSubscribedToPlan(uint256 planId, address subscriber) public view returns (bool) {
         return
-           (subscriptionStatuses[subscriber][planId].endTime==0||subscriptionStatuses[subscriber][planId].endTime > block.timestamp) &&
+            (subscriptionStatuses[subscriber][planId].endTime == 0 ||
+                subscriptionStatuses[subscriber][planId].endTime > block.timestamp) &&
             subscriptionStatuses[subscriber][planId].isActive;
     }
 
@@ -469,8 +486,8 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         });
         return abi.encodeCall(ISwapRouter.exactOutputSingle, (params)); //try to swap with all of balance first
     }
-          
-     function pack(address addr, uint256 functionId) public pure returns (FunctionReference) {
+
+    function pack(address addr, uint256 functionId) public pure returns (FunctionReference) {
         return FunctionReference.wrap(bytes21(bytes20(addr)) | bytes21(uint168(functionId)));
     }
 
@@ -534,7 +551,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
             associatedFunction: ownerUserOpValidationFunction
         });
 
-         manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
+        manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
             executionSelector: this.createProduct.selector,
             associatedFunction: ownerUserOpValidationFunction
         });

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { BasePlugin } from "modular-account-libs/src/plugins/BasePlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/src/interfaces/IPluginExecutor.sol";
@@ -87,18 +86,13 @@ contract SubscriptionManagerPlugin is BasePlugin {
         uint8 receiveChainId
     );
     event PlanDeleted(uint256 planId);
-    event PlanSubscribed(uint256 indexed planId, address indexed subscriber, address  paymentToken, uint256 endTime);
-    event PlanSubscriptionChanged(
-        uint256 planId,
-        address indexed subscriber,
-        address  paymentToken,
-        uint256 endTime
-    );
+    event PlanSubscribed(uint256 indexed planId, address indexed subscriber, address paymentToken, uint256 endTime);
+    event PlanSubscriptionChanged(uint256 planId, address indexed subscriber, address paymentToken, uint256 endTime);
     event PlanUnsubscribed(uint256 planId, address indexed subscriber);
     event SubscriptionCharged(
         uint256 indexed planId,
         address indexed subscriber,
-        address  paymentToken,
+        address paymentToken,
         uint256 paymentTokenAmount
     );
 
