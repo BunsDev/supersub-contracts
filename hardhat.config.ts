@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
   },
   abiExporter: {
     runOnCompile: true,
-    only: ['SubscriptionPlugin', 'SubscriptionManager'],
+    only: ['SubscriptionPlugin', 'SubscriptionManager', 'SubscriptionTokenBridge'],
     path: './abis',
     format: 'json',
     clear: true,
