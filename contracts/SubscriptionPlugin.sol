@@ -2,9 +2,11 @@
 pragma solidity ^0.8.24;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
-import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
-import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "modular-account-libs/interfaces/IPlugin.sol";
+import { BasePlugin } from "modular-account-libs/src/plugins/BasePlugin.sol";
+import { IPluginExecutor } from "modular-account-libs/src/interfaces/IPluginExecutor.sol";
+import { FunctionReference } from "modular-account-libs/src/interfaces/IPluginManager.sol";
+import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "modular-account-libs/src/interfaces/IPlugin.sol";
+
 import { ITokenBridge } from "./interfaces/ITokenBridge.sol";
 
 contract SubscriptionPlugin is BasePlugin {

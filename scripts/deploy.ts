@@ -10,7 +10,7 @@ async function deploy(
   swapFactoryAddr: string,
   WETH: string
 ) {
-  const subscriptionManger = await ethers.deployContract('SubscriptionManagerPlugin', [
+  const subscriptionManger = await ethers.deployContract('ProductSubscriptionManagerPlugin', [
     supportedTokens,
     chainId,
     swapFactoryAddr,

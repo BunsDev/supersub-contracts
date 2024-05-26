@@ -53,21 +53,123 @@ export class UserAccount {
     return false;
   }
 
+  async createProduct(
+    subscriptionManagerPlugin: Subscription,
+    name: string,
+    description: string,
+    logoURL: string,
+    productType: 0 | 1,
+    initPlans?: {
+      price: number;
+      chargeInterval: number;
+      tokenAddress: string;
+      receivingAddress: string;
+      destinationChain: number;
+    }[]
+  ) {
+    const currentProductId = await subscriptionManagerPlugin.getTotalProducts();
+    console.log(currentProductId);
+    const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
+    console.log('Subscription Plugin installation status: ', isPluginInstalled);
+    if (!isPluginInstalled) {
+      await this.installSubscriptionPlugin(subscriptionManagerPlugin);
+      console.log('Installed subscription Plugin');
+    }
+    const productParams = subscriptionManagerPlugin.encodeCreateProductParams(
+      name,
+      description,
+      logoURL,
+      productType,
+      initPlans
+    ) as `0x${string}`;
+    const accountClient = await this.initializeAccountClient();
+    const userOp = await accountClient.sendUserOperation({
+      uo: productParams,
+    });
+    const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    console.log(hash, 'product Creation txn gone');
+  }
+
+  async updateProduct(subscriptionManagerPlugin: Subscription, productId: number, isActive: boolean) {
+    const updateParams = subscriptionManagerPlugin.encodeUpdateProductParams(productId, isActive);
+    const accountClient = await this.initializeAccountClient();
+    const userOp = await accountClient.sendUserOperation({
+      uo: {
+        target: subscriptionManagerPlugin.address,
+        data: updateParams as `0x${string}`,
+      },
+    });
+    const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    console.log(hash, 'product update txn gone');
+  }
+
+  async createPlan(
+    subscriptionManagerPlugin: Subscription,
+    productId: number,
+    price: number,
+    chargeInterval: number,
+    planPaymentToken: string,
+    receivingAddress: string,
+    destinationChain: number
+  ) {
+    const createPlanParams = subscriptionManagerPlugin.encodeCreateSubscriptionPlanParams(
+      productId,
+      price,
+      chargeInterval,
+      planPaymentToken,
+      receivingAddress,
+      destinationChain
+    );
+    const accountClient = await this.initializeAccountClient();
+    const userOp = await accountClient.sendUserOperation({
+      uo: {
+        target: subscriptionManagerPlugin.address,
+        data: createPlanParams as `0x${string}`,
+      },
+    });
+    const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    console.log(hash, 'plan Creation txn gone');
+  }
+
+  async updateSubscriptionPlan(
+    subscriptionManagerPlugin: Subscription,
+    planId: number,
+    receivingAddress: string,
+    destinationChain: number,
+    isActive: boolean
+  ) {
+    const updatePlanParams = subscriptionManagerPlugin.encodeUpdateSubscriptionPlanParams(
+      planId,
+      receivingAddress,
+      destinationChain,
+      isActive
+    );
+    const accountClient = await this.initializeAccountClient();
+    const userOp = await accountClient.sendUserOperation({
+      uo: {
+        target: subscriptionManagerPlugin.address,
+        data: updatePlanParams as `0x${string}`,
+      },
+    });
+    const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    console.log(hash, 'plan update txn gone');
+  }
+
   async subscribe(
     subscriptionManagerPlugin: Subscription,
     planId: number,
-    duration: number,
+    endTime: number,
     paymentToken?: string,
     paymentTokenSwapFee: number = 0
   ) {
-    const subscriptionPlan = await subscriptionManagerPlugin.getSubscriptionById(planId);
+    const subscriptionPlan = await subscriptionManagerPlugin.getSubscriptionPlanById(planId);
     if (!paymentToken) {
-      paymentToken = subscriptionPlan[3];
+      paymentToken = subscriptionPlan[5];
       console.log(subscriptionPlan, paymentToken);
     }
     const subscribeParams = (await subscriptionManagerPlugin.encodeSubscribeFunctionParamas(
       planId,
-      duration,
+      endTime,
       paymentToken!,
       paymentTokenSwapFee
     )) as any;
@@ -87,21 +189,25 @@ export class UserAccount {
   async changeSubscriptionPlanPaymentInfo(
     subscriptionManagerPlugin: Subscription,
     planId: number,
-    endTime: number,
+    endTime?: number,
     paymentToken?: string,
     paymentTokenSwapFee: number = 0
   ) {
-    const subscriptionPlan = await subscriptionManagerPlugin.getSubscriptionById(planId);
+    const accountClient = await this.initializeAccountClient();
+    const smartAccountAddress = accountClient.getAddress();
+    const subscription = await subscriptionManagerPlugin.getUserSubscriptionByPlanId(smartAccountAddress, planId);
     if (!paymentToken) {
-      paymentToken = subscriptionPlan[3];
+      paymentToken = subscription[3];
     }
-    const subscribeParams = (await subscriptionManagerPlugin.encodechangeSubscriptionPlanPaymentInfoParams(
+    if (!endTime) {
+      endTime = Number(subscription[2]);
+    }
+    const subscribeParams = subscriptionManagerPlugin.encodeUpdateUserSubscriptionParams(
       planId,
       endTime,
       paymentToken!,
       paymentTokenSwapFee
-    )) as any;
-    const accountClient = await this.initializeAccountClient();
+    ) as any;
     const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
     console.log('Subscription Plugin installation status: ', isPluginInstalled);
     if (!isPluginInstalled) {
@@ -112,6 +218,41 @@ export class UserAccount {
     const userOp = await accountClient.sendUserOperation({ uo: subscribeParams });
     const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
     console.log(hash, 'Subscription txn gone');
+  }
+
+  async createRecurringPayment(
+    subscriptionManagerPlugin: Subscription,
+    initPlans: {
+      price: number; //amount
+      chargeInterval: number;
+      tokenAddress: string; //token to send to recipient
+      receivingAddress: string; //recipient address
+      destinationChain: number; // recipientt chain
+    },
+    endTime: number,
+    paymentToken?: string,
+    paymentTokenSwapFee: number = 0
+  ) {
+    if (!paymentToken) {
+      paymentToken = initPlans.tokenAddress;
+    }
+    const accountClient = await this.initializeAccountClient();
+    const recurringProductId = await subscriptionManagerPlugin.getProductForRecurringPayment(
+      accountClient.getAddress()
+    );
+    const recurringPaymentParams = subscriptionManagerPlugin.encodeCreateRecurringPaymentParams(
+      recurringProductId,
+      initPlans,
+      { endTime, paymentToken, paymentTokenSwapFee }
+    ) as `0x${string}`;
+    const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
+    if (!isPluginInstalled) {
+      await this.installSubscriptionPlugin(subscriptionManagerPlugin);
+      console.log('Installed subscription Plugin');
+    }
+    const userOp = await accountClient.sendUserOperation({ uo: recurringPaymentParams });
+    const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    console.log(hash, 'create Recurring txn gone');
   }
 
   async sendEther() {
@@ -131,11 +272,7 @@ export class UserAccount {
     const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
     if (isPluginInstalled) {
       await accountClient.sendUserOperation({
-        uo: {
-          target: subscriptionManagerPlugin.address,
-          value: BigInt(0),
-          data: unsubscribeParams,
-        },
+        uo: unsubscribeParams,
       });
     }
   }

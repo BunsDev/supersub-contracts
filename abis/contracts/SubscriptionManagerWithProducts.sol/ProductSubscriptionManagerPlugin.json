@@ -3,13 +3,13 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_supportedTokens",
+        "name": "_supportedBridgingTokens",
         "type": "address[]"
       },
       {
-        "internalType": "uint8",
+        "internalType": "uint256",
         "name": "chainId",
-        "type": "uint8"
+        "type": "uint256"
       },
       {
         "internalType": "address",
@@ -82,52 +82,9 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "chargeInterval",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "receivingAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "receiveChainId",
-        "type": "uint8"
-      }
-    ],
-    "name": "PlanChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "planId",
+        "name": "productId",
         "type": "uint256"
       },
       {
@@ -151,36 +108,17 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
         "name": "receivingAddress",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint8",
-        "name": "receiveChainId",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "destinationChain",
+        "type": "uint256"
       }
     ],
     "name": "PlanCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "planId",
-        "type": "uint256"
-      }
-    ],
-    "name": "PlanDeleted",
     "type": "event"
   },
   {
@@ -218,38 +156,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "planId",
-        "type": "uint256"
-      },
-      {
         "indexed": true,
-        "internalType": "address",
-        "name": "subscriber",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "paymentToken",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "PlanSubscriptionChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "uint256",
         "name": "planId",
         "type": "uint256"
@@ -262,6 +169,105 @@
       }
     ],
     "name": "PlanUnsubscribed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "planId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receivingAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "destinationChain",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "PlanUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "name",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "provider",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum ProductSubscriptionManagerPlugin.ProductType",
+        "name": "productType",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "logoURL",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      }
+    ],
+    "name": "ProductCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "provider",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "ProductUpdated",
     "type": "event"
   },
   {
@@ -294,6 +300,41 @@
     ],
     "name": "SubscriptionCharged",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "planId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "subscriber",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "paymentToken",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "endTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "UserSubscriptionChanged",
+    "type": "event"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "fallback"
   },
   {
     "inputs": [],
@@ -364,51 +405,19 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "planId",
+        "name": "",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "receivingAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint8",
-        "name": "receiveChainId",
-        "type": "uint8"
       }
     ],
-    "name": "changeSubscriptionPlanInfo",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
+    "name": "ccipChainSelectors",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "planId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "paymentToken",
-        "type": "address"
-      },
-      {
-        "internalType": "uint24",
-        "name": "paymentTokenSwapFee",
-        "type": "uint24"
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
       }
     ],
-    "name": "changeSubscriptionPlanPaymentInfo",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -432,6 +441,131 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "name",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "logoURL",
+        "type": "string"
+      },
+      {
+        "internalType": "enum ProductSubscriptionManagerPlugin.ProductType",
+        "name": "productType",
+        "type": "uint8"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "chargeInterval",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "receivingAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "destinationChain",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ProductSubscriptionManagerPlugin.UserSubscriptionParams[]",
+        "name": "initPlans",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "createProduct",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "chargeInterval",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "receivingAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "destinationChain",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ProductSubscriptionManagerPlugin.UserSubscriptionParams",
+        "name": "initPlan",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "paymentToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint24",
+        "name": "paymentTokenSwapFee",
+        "type": "uint24"
+      }
+    ],
+    "name": "createRecurringPayment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint256",
         "name": "price",
         "type": "uint256"
@@ -452,9 +586,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint8",
-        "name": "receiveChainId",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "destinationChain",
+        "type": "uint256"
       }
     ],
     "name": "createSubscriptionPlan",
@@ -467,25 +601,12 @@
     "name": "currentChainId",
     "outputs": [
       {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
-        "name": "planId",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "deleteSubscription",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -507,6 +628,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "numProducts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -572,9 +706,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint8",
+        "internalType": "uint256",
         "name": "functionId",
-        "type": "uint8"
+        "type": "uint256"
       }
     ],
     "name": "pack",
@@ -1063,6 +1197,40 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "products",
+    "outputs": [
+      {
+        "internalType": "enum ProductSubscriptionManagerPlugin.ProductType",
+        "name": "productType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "provider",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint8",
         "name": "functionId",
         "type": "uint8"
@@ -1097,7 +1265,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "duration",
+        "name": "endTime",
         "type": "uint256"
       },
       {
@@ -1133,6 +1301,11 @@
       },
       {
         "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "price",
         "type": "uint256"
       },
@@ -1142,13 +1315,13 @@
         "type": "uint256"
       },
       {
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "destinationChain",
+        "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "provider",
+        "name": "tokenAddress",
         "type": "address"
       },
       {
@@ -1157,13 +1330,8 @@
         "type": "address"
       },
       {
-        "internalType": "uint8",
-        "name": "receiveChainId",
-        "type": "uint8"
-      },
-      {
         "internalType": "bool",
-        "name": "deleted",
+        "name": "isActive",
         "type": "bool"
       }
     ],
@@ -1227,7 +1395,7 @@
         "type": "address"
       }
     ],
-    "name": "supportedTokens",
+    "name": "supportedBridgingTokens",
     "outputs": [
       {
         "internalType": "bool",
@@ -1284,6 +1452,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "tokenBridge",
+    "outputs": [
+      {
+        "internalType": "contract ITokenBridge",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1292,6 +1473,85 @@
       }
     ],
     "name": "unsubscribe",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "productId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "provider",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "updateProduct",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "planId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "receivingAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "destinationChain",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "updateSubscriptionPlan",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "planId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "paymentToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint24",
+        "name": "paymentTokenSwapFee",
+        "type": "uint24"
+      }
+    ],
+    "name": "updateUserSubscription",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1381,5 +1641,9 @@
     ],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]

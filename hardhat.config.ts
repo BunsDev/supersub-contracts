@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-toolbox';
-import '@nomicfoundation/hardhat-foundry';
+// import '@nomicfoundation/hardhat-foundry';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
     clear: true,
   },
   networks:
-    process.env.ALCHEMY_API_KEY && process.env.PRIVATE_KEY
+    process.env.ALCHEMY_API_KEY && process.env.PRIVATE_KEY_1
       ? {
           hardhat: {
             allowUnlimitedContractSize: true,
@@ -36,12 +36,12 @@ const config: HardhatUserConfig = {
           eth: {
             url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY!}`,
             chainId: 1,
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY_1!],
           },
           polygonAmoy: {
             url: `https://polygon-amoy.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY!}`,
             chainId: 80002,
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY_1!],
           },
         }
       : undefined,
