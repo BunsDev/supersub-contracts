@@ -30,11 +30,7 @@ describe('Subscription Plugin Tests', function () {
     const ccipLocalSimulator = await ccipLocalSimulatorFactory.deploy();
     const ccipConfig = await ccipLocalSimulator.configuration();
     const ccipBnM = bnmFactory.attach(ccipConfig.ccipBnM_);
-    const tokenBridge = await ccipBridgeFactory.deploy(
-      ccipConfig.sourceRouter_,
-      ccipConfig.linkToken_,
-      []
-    );
+    const tokenBridge = await ccipBridgeFactory.deploy(ccipConfig.sourceRouter_, ccipConfig.linkToken_, []);
     const subscriptionPlugin = await SubscriptionPluginFactory.deploy(chainId, await tokenBridge.getAddress());
     const [beneficiary, mscaOwner] = await hre.ethers.getSigners();
     const mscaAccount = await UpgradeableModularAccountFactory.deploy(await entrypoint.getAddress());
@@ -76,7 +72,7 @@ describe('Subscription Plugin Tests', function () {
     it('Should set correct chain ID and token bridge', async () => {
       const { subscriptionPlugin, tokenBridge } = await loadFixture(setUp);
       expect(await subscriptionPlugin.currentChainId()).to.equal(chainId);
-      expect(await subscriptionPlugin.tokenBridge()).to.equal(await tokenBridge.getAddress())
+      expect(await subscriptionPlugin.tokenBridge()).to.equal(await tokenBridge.getAddress());
     });
   });
 
@@ -396,10 +392,10 @@ describe('Subscription Plugin Tests', function () {
     });
     it('Create Product With Plan Tests', async () => {
       const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
-      const [provider,] = await hre.ethers.getSigners();
-      const productName = hre.ethers.encodeBytes32String("Test product with plan");
-      const description = "basic description here";
-      const logo = "http://p.img";
+      const [provider] = await hre.ethers.getSigners();
+      const productName = hre.ethers.encodeBytes32String('Test product with plan');
+      const description = 'basic description here';
+      const logo = 'http://p.img';
       const planNonce = await subscriptionPlugin.planNonce();
       const plans = [
         {
@@ -410,11 +406,11 @@ describe('Subscription Plugin Tests', function () {
         {
           price: BigInt(200) * BigInt(10) ** (await token.decimals()),
           chargeInterval: 90800,
-          id: planNonce + BigInt(1)
-        }
+          id: planNonce + BigInt(1),
+        },
       ];
       const expectedProductId = await subscriptionPlugin.productNonce();
-      const expectedPlanNonce = await subscriptionPlugin.planNonce() + BigInt(plans.length);
+      const expectedPlanNonce = (await subscriptionPlugin.planNonce()) + BigInt(plans.length);
       const expectedProductNonce = expectedProductId + BigInt(1);
       const txn = await subscriptionPlugin.createProductWithPlans(
         productName,
@@ -465,10 +461,10 @@ describe('Subscription Plugin Tests', function () {
     });
     it('Create Reccurring subscription test', async () => {
       const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
-      const [provider,] = await hre.ethers.getSigners();
-      const productName = hre.ethers.encodeBytes32String("recurring subsciption");
-      const description = "basic description here";
-      const logo = "http://p.img";
+      const [provider] = await hre.ethers.getSigners();
+      const productName = hre.ethers.encodeBytes32String('recurring subsciption');
+      const description = 'basic description here';
+      const logo = 'http://p.img';
       const chargeInterval = 86400;
       const price = BigInt(200) * BigInt(10) ** (await token.decimals());
       const expectedProductId = await subscriptionPlugin.productNonce();
@@ -484,7 +480,7 @@ describe('Subscription Plugin Tests', function () {
         chainId,
         chargeInterval,
         price
-      )
+      );
       const product = await subscriptionPlugin.products(expectedProductId);
       expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
       expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
@@ -509,17 +505,17 @@ describe('Subscription Plugin Tests', function () {
           chainId,
           true
         );
-        const plan = await subscriptionPlugin.plans(expectedPlanId);
-        expect(plan.productId).to.equal(product.productId);
-        expect(plan.provider).to.equal(product.provider);
-        expect(plan.chargeInterval).to.equal(chargeInterval);
-        expect(plan.price).to.equal(price);
-        expect(plan.isActive).to.equal(true);
-        expect(plan.planId).to.equal(expectedPlanId);
-        await expect(txn)
-          .to.emit(subscriptionPlugin, 'PlanCreated')
-          .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
-    })
+      const plan = await subscriptionPlugin.plans(expectedPlanId);
+      expect(plan.productId).to.equal(product.productId);
+      expect(plan.provider).to.equal(product.provider);
+      expect(plan.chargeInterval).to.equal(chargeInterval);
+      expect(plan.price).to.equal(price);
+      expect(plan.isActive).to.equal(true);
+      expect(plan.planId).to.equal(expectedPlanId);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'PlanCreated')
+        .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
+    });
   });
 
   describe('User Subscription', async () => {

@@ -205,15 +205,7 @@ contract SubscriptionPlugin is BasePlugin {
         address _receivingAddress,
         uint256 _destinationChain
     ) public {
-        _createProduct(
-            _name,
-            _description,
-            _logoUrl,
-            _type,
-            _chargeToken,
-            _receivingAddress,
-            _destinationChain
-        );
+        _createProduct(_name, _description, _logoUrl, _type, _chargeToken, _receivingAddress, _destinationChain);
     }
 
     function createPlan(
@@ -257,11 +249,7 @@ contract SubscriptionPlugin is BasePlugin {
             _destinationChain
         );
         for (uint i = 0; i < _plans.length; i++) {
-            createPlan(
-                productId,
-                _plans[i].chargeInterval,
-                _plans[i].price
-            );
+            createPlan(productId, _plans[i].chargeInterval, _plans[i].price);
         }
     }
 
@@ -284,11 +272,7 @@ contract SubscriptionPlugin is BasePlugin {
             _receivingAddress,
             _destinationChain
         );
-        createPlan(
-            productId,
-            _chargeInterval,
-            _price
-        );
+        createPlan(productId, _chargeInterval, _price);
     }
 
     function updateProduct(
@@ -365,11 +349,10 @@ contract SubscriptionPlugin is BasePlugin {
     // ┃  Author Plugin functions  ┃
     // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-    function changeSubscriptionPlan(
-        // uint256 productId,
-        // uint256 planId,
-        // uint256 subscriptionId
-    ) public pure {
+    function changeSubscriptionPlan() public pure // uint256 productId,
+    // uint256 planId,
+    // uint256 subscriptionId
+    {
         // UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         // Plan memory plan = plans[planId];
         // if (subscription.provider != plan.provider) {
