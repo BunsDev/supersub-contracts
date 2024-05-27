@@ -271,9 +271,11 @@ export class UserAccount {
     const accountClient = await this.initializeAccountClient();
     const isPluginInstalled = await this.isPluginInstalled(subscriptionManagerPlugin.address);
     if (isPluginInstalled) {
-      await accountClient.sendUserOperation({
+      const userOp = await accountClient.sendUserOperation({
         uo: unsubscribeParams,
       });
+      const hash = await accountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+      console.log(hash, 'unsubscribe txn gone');
     }
   }
 

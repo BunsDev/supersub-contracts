@@ -328,6 +328,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
     ) public {
         uint256 recurringProductId = productId;
         UserSubscriptionParams[] memory nullPlan;
+        require(initPlan.receivingAddress != msg.sender, "Recurring payment to self not allowed");
         if (recurringProductId >= numProducts) {
             recurringProductId = numProducts;
             createProduct("Supersub", "Self Recurring Payment", "supersub.jpg", ProductType.RECURRING, nullPlan);
@@ -335,7 +336,6 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         Product memory recurringProduct = products[recurringProductId];
         require(recurringProduct.productType == ProductType.RECURRING, "Product is not of recurring type");
         require(recurringProduct.provider == msg.sender, "Recurring Product not belonging to user");
-        require(initPlan.receivingAddress != msg.sender, "Recurring payment to self not allowed");
         createSubscriptionPlan(
             recurringProductId,
             initPlan.price,
@@ -390,8 +390,6 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         require(userSubscription.startTime <= block.timestamp, "subscription is yet to start");
         require(userSubscription.endTime == 0 || userSubscription.endTime >= block.timestamp, "subscription has ended");
         userSubscription.lastChargeDate = block.timestamp;
-        uint256 val = 0;
-
         if (plan.destinationChain == currentChainId) {
             if (plan.tokenAddress == userSubscription.paymentToken) {
                 if (plan.tokenAddress == address(0)) {
@@ -402,10 +400,12 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
                 }
             } else {
                 //execute swap
-                executeSwap(subscriber, plan.receivingAddress, val, userSubscription, plan);
+                executeSwap(subscriber, plan.receivingAddress, userSubscription, plan);
             }
         } else {
             if (plan.tokenAddress == userSubscription.paymentToken) {
+                bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(tokenBridge), plan.price));
+                IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, approveCallData);
                 bytes memory bridgeCallData = abi.encodeCall(
                     ITokenBridge.transferToken,
                     (0, plan.receivingAddress, plan.tokenAddress, plan.price, 0, 0)
@@ -413,7 +413,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
                 IPluginExecutor(subscriber).executeFromPluginExternal(address(tokenBridge), 0, bridgeCallData);
             } else {
                 //execute swap with contract as recipient
-                executeSwap(subscriber, address(this), val, userSubscription, plan);
+                executeSwap(subscriber, address(this), userSubscription, plan);
                 tokenBridge.transferToken(
                     ccipChainSelectors[plan.destinationChain],
                     plan.receivingAddress,
@@ -458,12 +458,12 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
     function executeSwap(
         address subscriber,
         address recipient,
-        uint256 swapVal,
         UserSubscription memory userSubscription,
         SubscriptionPlan memory plan
     ) private {
         address tokenA = userSubscription.paymentToken;
         address tokenB = plan.tokenAddress;
+        uint256 swapVal = 0;
         uint256 tokenBalance;
         if (userSubscription.paymentToken == address(0)) {
             tokenA = WETH;

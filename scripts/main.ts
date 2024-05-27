@@ -79,7 +79,7 @@ async function createRecurringPayment() {
     {
       price: 100000000000000,
       chargeInterval: 24 * 3600 * 30,
-      tokenAddress: ZeroAddress,
+      tokenAddress: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582',
       receivingAddress: '0x9d1bc836941319df22C3Dd9Ebba6EB1eE058b623',
       destinationChain: 4,
     },
@@ -99,7 +99,7 @@ async function main() {
 
   const duration = 24 * 30 * 12 * 60 * 60;
   const endTime = Math.floor(Date.now() / 1000) + duration;
-  await account.subscribe(subscription, planId - 1, endTime);
+  await account.subscribe(subscription, 2, endTime);
 
   console.log('Successfully subscribed');
   console.log(await account.getSubscriptions(subscription));
@@ -116,12 +116,23 @@ async function main() {
 async function charge() {
   const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
   const subscription = new Subscription('matic-amoy', subscriptionPluginAddr);
-  const signer = new Wallet(PRIVATE_KEY_2!, provider);
+  const signer = new Wallet(PRIVATE_KEY_1!, provider);
   // console.log(await subscription.getSubscriptionPlanById(2));
   const account = new UserAccount(signer.privateKey!, polygonAmoy, accountSalt);
   const smartAccountAddress = (await account.initializeAccountClient()).getAddress();
   console.log(smartAccountAddress);
-  await subscription.charge(0, smartAccountAddress);
+  await subscription.charge(2, smartAccountAddress);
+  console.log('Successfully charged subscription');
+}
+
+async function unsubscribe() {
+  const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
+  const subscription = new Subscription('matic-amoy', subscriptionPluginAddr);
+  const signer = new Wallet(PRIVATE_KEY_1!, provider);
+  // console.log(await subscription.getSubscriptionPlanById(2));
+  const account = new UserAccount(signer.privateKey!, polygonAmoy, accountSalt);
+  const smartAccountAddress = (await account.initializeAccountClient()).getAddress();
+  await account.unsubscribe(subscription, 2);
   console.log('Successfully charged subscription');
 }
 
@@ -134,8 +145,8 @@ async function charge() {
 //First subscribe txnHash 0x763cda5150e6b7068c10bb88f8c205f83449a274fcd946ff3e09e55524d5eb67 of subscription
 //Second subscribe txnHash 0xd6dd75b4432c866c8952237b49c3f304ee8e7a0ab06422e9a04addac1992cc00
 
-charge(); //https://amoy.polygonscan.com/tx/0x681b4e921981fd2ad7c338fae780f74e7017c54a3e826179c9127e3443266460 (charge with native token)
-
+// charge(); //https://amoy.polygonscan.com/tx/0x681b4e921981fd2ad7c338fae780f74e7017c54a3e826179c9127e3443266460 (charge with native token)
+unsubscribe();
 //old adresss
 // 0x8cda78ab26ab7e06dae01972a9d47b4ce0f673e1dc16671750fa8155d827cde4 charged in USDC token
 // 0x8cda78ab26ab7e06dae01972a9d47b4ce0f673e1dc16671750fa8155d827cde4 charged in USDC token
