@@ -290,12 +290,6 @@
         "internalType": "address",
         "name": "paymentToken",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "paymentTokenAmount",
-        "type": "uint256"
       }
     ],
     "name": "SubscriptionCharged",

@@ -119,12 +119,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
     event PlanSubscribed(uint256 indexed planId, address indexed subscriber, address paymentToken, uint256 endTime);
     event PlanUnsubscribed(uint256 indexed planId, address indexed subscriber);
     event UserSubscriptionChanged(uint256 planId, address indexed subscriber, address paymentToken, uint256 endTime);
-    event SubscriptionCharged(
-        uint256 indexed planId,
-        address indexed subscriber,
-        address paymentToken,
-        uint256 paymentTokenAmount
-    );
+    event SubscriptionCharged(uint256 indexed planId, address indexed subscriber, address paymentToken);
 
     constructor(
         address[] memory _supportedBridgingTokens,
@@ -247,7 +242,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         address receivingAddress,
         uint256 destinationChain
     ) public productExists(productId) isActiveProduct(productId) isProductProviderr(productId, msg.sender) {
-        require(chargeInterval < block.timestamp, "Invalid charge Interval ");
+        require(chargeInterval < 52 weeks && chargeInterval > 1 days, "Invalid charge Interval ");
         if (destinationChain != currentChainId) {
             require(ccipChainSelectors[destinationChain] != 0, "destination chain not supported");
             require(supportedBridgingTokens[tokenAddress], "token specified is not supported");
@@ -340,6 +335,7 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         Product memory recurringProduct = products[recurringProductId];
         require(recurringProduct.productType == ProductType.RECURRING, "Product is not of recurring type");
         require(recurringProduct.provider == msg.sender, "Recurring Product not belonging to user");
+        require(initPlan.receivingAddress != msg.sender, "Recurring payment to self not allowed");
         createSubscriptionPlan(
             recurringProductId,
             initPlan.price,
@@ -396,67 +392,39 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
         userSubscription.lastChargeDate = block.timestamp;
         uint256 val = 0;
 
-        if (plan.tokenAddress == userSubscription.paymentToken) {
-            if (plan.tokenAddress == address(0)) {
-                IPluginExecutor(subscriber).executeFromPluginExternal(address(this), plan.price, "");
-            } else {
-                bytes memory callData = abi.encodeCall(IERC20.transfer, (address(this), plan.price));
-                IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, callData);
-            }
-        } else {
-            address tokenA = userSubscription.paymentToken;
-            address tokenB = plan.tokenAddress;
-            uint256 tokenBalance;
-            if (userSubscription.paymentToken == address(0)) {
-                tokenA = WETH;
-                tokenBalance = address(subscriber).balance;
-                val = tokenBalance;
-            } else {
-                tokenBalance = IERC20(plan.tokenAddress).balanceOf(subscriber);
-            }
-            if (plan.tokenAddress == address(0)) {
-                tokenB = WETH;
-            }
-            bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance)); //try to swap with all of balance first
-            IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
-            bytes memory callData = getSwapCallData(
-                tokenA,
-                tokenB,
-                userSubscription.paymentTokenSwapFee,
-                address(this),
-                plan.price,
-                tokenBalance
-            );
-            bytes memory returnData = IPluginExecutor(subscriber).executeFromPluginExternal(
-                address(swapRouter),
-                val,
-                callData
-            );
-            val = abi.decode(returnData, (uint256));
-            approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), 0)); //set approval back to 0
-            IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
-            if (tokenB == WETH) {
-                IWETH(WETH).withdraw(plan.price);
-            }
-        }
         if (plan.destinationChain == currentChainId) {
-            if (plan.tokenAddress == address(0)) {
-                payable(plan.receivingAddress).call{ value: plan.price }("");
+            if (plan.tokenAddress == userSubscription.paymentToken) {
+                if (plan.tokenAddress == address(0)) {
+                    IPluginExecutor(subscriber).executeFromPluginExternal(plan.receivingAddress, plan.price, "0x");
+                } else {
+                    bytes memory callData = abi.encodeCall(IERC20.transfer, (plan.receivingAddress, plan.price));
+                    IPluginExecutor(subscriber).executeFromPluginExternal(plan.tokenAddress, 0, callData);
+                }
             } else {
-                IERC20(plan.tokenAddress).transfer(plan.receivingAddress, plan.price);
+                //execute swap
+                executeSwap(subscriber, plan.receivingAddress, val, userSubscription, plan);
             }
         } else {
-            tokenBridge.transferToken(
-                ccipChainSelectors[plan.destinationChain],
-                plan.receivingAddress,
-                plan.tokenAddress,
-                plan.price,
-                0,
-                planId
-            );
+            if (plan.tokenAddress == userSubscription.paymentToken) {
+                bytes memory bridgeCallData = abi.encodeCall(
+                    ITokenBridge.transferToken,
+                    (0, plan.receivingAddress, plan.tokenAddress, plan.price, 0, 0)
+                ); //same token but on another chain
+                IPluginExecutor(subscriber).executeFromPluginExternal(address(tokenBridge), 0, bridgeCallData);
+            } else {
+                //execute swap with contract as recipient
+                executeSwap(subscriber, address(this), val, userSubscription, plan);
+                tokenBridge.transferToken(
+                    ccipChainSelectors[plan.destinationChain],
+                    plan.receivingAddress,
+                    plan.tokenAddress,
+                    plan.price,
+                    0,
+                    planId
+                );
+            }
         }
-
-        emit SubscriptionCharged(planId, subscriber, userSubscription.paymentToken, val);
+        emit SubscriptionCharged(planId, subscriber, userSubscription.paymentToken);
     }
 
     function isSubscribedToPlan(uint256 planId, address subscriber) public view returns (bool) {
@@ -485,6 +453,46 @@ contract ProductSubscriptionManagerPlugin is BasePlugin {
             limitSqrtPrice: 0
         });
         return abi.encodeCall(ISwapRouter.exactOutputSingle, (params)); //try to swap with all of balance first
+    }
+
+    function executeSwap(
+        address subscriber,
+        address recipient,
+        uint256 swapVal,
+        UserSubscription memory userSubscription,
+        SubscriptionPlan memory plan
+    ) private {
+        address tokenA = userSubscription.paymentToken;
+        address tokenB = plan.tokenAddress;
+        uint256 tokenBalance;
+        if (userSubscription.paymentToken == address(0)) {
+            tokenA = WETH;
+            tokenBalance = address(subscriber).balance;
+            swapVal = tokenBalance;
+        } else {
+            tokenBalance = IERC20(plan.tokenAddress).balanceOf(subscriber);
+        }
+        if (plan.tokenAddress == address(0)) {
+            tokenB = WETH;
+        }
+        bytes memory approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), tokenBalance)); //try to swap with all of balance first
+        IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
+        bytes memory callData = getSwapCallData(
+            tokenA,
+            tokenB,
+            userSubscription.paymentTokenSwapFee,
+            recipient,
+            plan.price,
+            tokenBalance
+        );
+        bytes memory returnData = IPluginExecutor(subscriber).executeFromPluginExternal(
+            address(swapRouter),
+            swapVal,
+            callData
+        );
+        swapVal = abi.decode(returnData, (uint256));
+        approveCallData = abi.encodeCall(IERC20.approve, (address(swapRouter), 0)); //set approval back to 0
+        IPluginExecutor(subscriber).executeFromPluginExternal(tokenA, 0, approveCallData);
     }
 
     function pack(address addr, uint256 functionId) public pure returns (FunctionReference) {
