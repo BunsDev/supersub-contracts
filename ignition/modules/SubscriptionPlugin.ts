@@ -12,9 +12,9 @@ const SubscriptionPluginModule = buildModule('SubscriptionPluginModule', (m) => 
     '16015286601757825753',
     '5224473277236331295',
   ];
-  const ccipBridge = m.contract('SubscriptionTokenBridge', [ccipAmoyRouter, ccipAmoyLink, amoyDestinationChains]);
-  const subscriptionPlugin = m.contract('SubscriptionPlugin', [amoyChainId, ccipBridge]);
-  return { subscriptionPlugin, ccipBridge };
+  const ccipAmoyBridge = '0x28689f559337a8851b53ab5f3e0ddd39e5d145eb'; // Amoy Chain
+  const subscriptionPlugin = m.contract('SubscriptionPlugin', [amoyChainId, ccipAmoyBridge]);
+  return { subscriptionPlugin };
 });
 
 export default SubscriptionPluginModule;
