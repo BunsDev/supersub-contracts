@@ -1,6 +1,6 @@
 import { Address } from '@alchemy/aa-core';
-import { AlchemyProvider, Contract, Wallet } from 'ethers';
-import { createModularAccountAlchemyClient } from '@alchemy/aa-alchemy';
+import { AlchemyProvider, Contract, Networkish } from 'ethers';
+import { AlchemySmartAccountClient, createModularAccountAlchemyClient } from '@alchemy/aa-alchemy';
 import { accountLoupeActions } from '@alchemy/aa-accounts';
 import { LocalAccountSigner, polygonAmoy } from '@alchemy/aa-core';
 import { abi } from '../artifacts/contracts/SubscriptionPlugin.sol/SubscriptionPlugin.json';
@@ -10,87 +10,238 @@ import { config as envConfig } from 'dotenv';
 
 envConfig();
 
-const subscriptionPluginAddr: Address = '0x92010Ac5622eDE0eD5AAe577A418A734A3B069a8';
-const PRIVATE_KEY_1 = process.env.PRIVATE_KEY_1;
-const PRIVATE_KEY_2 = process.env.PRIVATE_KEY_2;
-const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
-const accountSalt = 13;
-const ACCOUNT_ABSTRATION_POLICY_ID = process.env.ACCOUNT_ABSTRATION_POLICY_ID;
-const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
-const subscriptionPlugin = new Contract(subscriptionPluginAddr, abi, provider) as unknown as SubscriptionPlugin;
-const signer = new Wallet(PRIVATE_KEY_2!, provider);
-const amoyChainId = 80002;
-const usdcDecimals = 6;
+interface Plan {
+  price: number;
+  chargeInterval: number;
+}
 
-const setUpModularAccount = async (privateKey: String, salt: number) => {
-  const smartAccount = await createModularAccountAlchemyClient({
-    apiKey: ALCHEMY_API_KEY!,
-    chain: polygonAmoy,
+class PluginClient {
+  chain: Networkish;
+  pluginAddress: Address;
+  pluginContract: SubscriptionPlugin;
+  smartAccountClient: AlchemySmartAccountClient;
+
+  constructor(
+    chain: Networkish,
+    pluginAddr: Address,
+    pluginAbi: ethers.Interface | ethers.InterfaceAbi,
+    client: AlchemySmartAccountClient,
+    provider: AlchemyProvider
+  ) {
+    this.chain = chain;
+    this.pluginAddress = pluginAddr;
+    this.pluginContract = new Contract(pluginAddr, pluginAbi, provider) as unknown as SubscriptionPlugin;
+    this.smartAccountClient = client;
+  }
+
+  formatPrice(price: number, decimals: number) {
+    return BigInt(price) * BigInt(10) ** BigInt(decimals);
+  }
+
+  async isPluginInstalled() {
+    const accountLoupeActionsExtendedClient = this.smartAccountClient.extend(accountLoupeActions);
     //@ts-ignore
-    signer: LocalAccountSigner.privateKeyToAccountSigner(privateKey),
-    salt: BigInt(salt || 0),
-    gasManagerConfig: {
-      policyId: ACCOUNT_ABSTRATION_POLICY_ID!,
-    },
-  });
-  const accountLoupeActionsExtendedClient = smartAccount.extend(accountLoupeActions);
-  const installedPlugins = await accountLoupeActionsExtendedClient.getInstalledPlugins({});
-  if (!installedPlugins.map((addr) => addr.toLowerCase()).includes(subscriptionPluginAddr.toLowerCase())) {
-    const pluginDependency0 = (await subscriptionPlugin.pack(
+    const installedPlugins = await accountLoupeActionsExtendedClient.getInstalledPlugins({});
+    if (installedPlugins.map((addr) => addr.toLowerCase()).includes(this.pluginAddress.toLowerCase())) {
+      return true;
+    }
+    return false;
+  }
+
+  async installPlugin() {
+    const pluginDependency0 = (await this.pluginContract.pack(
       '0xcE0000007B008F50d762D155002600004cD6c647',
       0
     )) as unknown as `0x${string}`;
-    const pluginDependency1 = (await subscriptionPlugin.pack(
+    const pluginDependency1 = (await this.pluginContract.pack(
       '0xcE0000007B008F50d762D155002600004cD6c647',
       1
     )) as unknown as `0x${string}`;
+    const accountLoupeActionsExtendedClient = this.smartAccountClient.extend(accountLoupeActions);
+    //@ts-ignore
     await accountLoupeActionsExtendedClient.installPlugin({
-      pluginAddress: subscriptionPluginAddr,
+      pluginAddress: this.pluginAddress,
       dependencies: [pluginDependency0, pluginDependency1],
     });
   }
-  return smartAccount;
-};
 
-const createProduct = async (
-  name: string,
-  description: string,
-  logo: string,
-  chargeToken: string,
-  destinationChain: number
-) => {
-  const txn = await subscriptionPlugin
-    .connect(signer)
-    .createProduct(
+  async createProduct(
+    name: string,
+    description: string,
+    logoUrl: string,
+    chargeToken: Address,
+    reciepient: Address,
+    destinationChain: number
+  ) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('createProduct', [
       ethers.encodeBytes32String(name),
       description,
-      logo,
+      logoUrl,
       1,
       chargeToken,
-      signer.address,
-      destinationChain
-    );
-  console.log(`Transaction Hash: ${txn.hash}`);
-};
+      reciepient,
+      destinationChain,
+    ]) as any;
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
 
-const createPlan = async (productId: number, chargeInterval: number, price: number) => {
-  const txn = await subscriptionPlugin
-    .connect(signer)
-    .createPlan(productId, chargeInterval, BigInt(price) * BigInt(10) ** BigInt(usdcDecimals));
-  console.log(`Transaction Hash: ${txn.hash}`);
-};
+  async updateProduct(productId: number, reciepient: Address, destinationChain: number, isActive: boolean) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('updateProduct', [
+      productId,
+      reciepient,
+      destinationChain,
+      isActive,
+    ]);
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
 
-const updateProduct = async (productId: number, reciepient: string, destChain: number) => {
-  const txn = await subscriptionPlugin.connect(signer).updateProduct(productId, reciepient, destChain, true);
-  console.log(`Transaction Hash: ${txn.hash}`);
-};
+  async createPlan(productId: number, chargeInterval: number, price: number, decimals: number) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('createPlan', [
+      productId,
+      chargeInterval,
+      this.formatPrice(price, decimals),
+    ]) as any;
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
 
-const updatePlan = async (planId: number) => {
-  const txn = await subscriptionPlugin.connect(signer).updatePlan(planId, true);
-  console.log(`Transaction Hash: ${txn.hash}`);
-};
+  async updatePlan(planId: number, isActive: boolean) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('updatePlan', [planId, isActive]);
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
+
+  async createProductWithPlans(
+    name: string,
+    description: string,
+    logoUrl: string,
+    chargeToken: Address,
+    reciepient: Address,
+    destinationChain: number,
+    plans: Plan[],
+    decimals: number
+  ) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    // const res = [
+    //   ethers.encodeBytes32String(name),
+    //   description,
+    //   logoUrl,
+    //   1,
+    //   chargeToken,
+    //   reciepient,
+    //   destinationChain,
+    //   plans.map(plan=>{
+    //     return [this.formatPrice(plan.price, decimals), plan.chargeInterval]
+    //   })
+    // ];
+    // console.log(res);
+    const param = this.pluginContract.interface.encodeFunctionData('createProductWithPlans', [
+      ethers.encodeBytes32String(name),
+      description,
+      logoUrl,
+      1,
+      chargeToken,
+      reciepient,
+      destinationChain,
+      plans.map((plan) => {
+        return { price: this.formatPrice(plan.price, decimals), chargeInterval: plan.chargeInterval };
+      }),
+    ]);
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
+
+  async createRecurringSubscription(
+    name: string,
+    description: string,
+    logoUrl: string,
+    chargeToken: Address,
+    chargeInterval: number,
+    reciepient: Address,
+    destinationChain: number,
+    price: number,
+    decimals: number
+  ) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('createRecurringSubscription', [
+      ethers.encodeBytes32String(name),
+      description,
+      logoUrl,
+      chargeToken,
+      reciepient,
+      destinationChain,
+      chargeInterval,
+      this.formatPrice(price, decimals),
+    ]);
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
+
+  async subscribe(planId: number, endTime: number) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('subscribe', [planId, endTime]);
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
+
+  async unSubscribe(subId: number) {
+    if (!(await this.isPluginInstalled())) {
+      await this.installPlugin();
+    }
+    const param = this.pluginContract.interface.encodeFunctionData('unSubscribe', [subId]);
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
+}
 
 const main = async () => {
+  const subscriptionPluginAddr: Address = '0x92010Ac5622eDE0eD5AAe577A418A734A3B069a8';
+  const PRIVATE_KEY = process.env.PRIVATE_KEY_1;
+  const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+  const accountSalt = 13;
+  const ACCOUNT_ABSTRATION_POLICY_ID = process.env.ACCOUNT_ABSTRATION_POLICY_ID;
+  const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
+  const amoyChainId = 80002;
+  const usdcDecimals = 6;
+  const linkDecimals = 18;
+  const linkAddr = '0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904';
+  const reciepient = '0xF65330dC75e32B20Be62f503a337cD1a072f898f';
   // await createProduct(
   //   "Spotify NGN",
   //   "spotify nigeria product",
@@ -103,10 +254,53 @@ const main = async () => {
   //   86400, // 24 hours
   //   5
   // )
-  const smartAccount = await setUpModularAccount(PRIVATE_KEY_1!, accountSalt);
-  const subscribeParams = subscriptionPlugin.interface.encodeFunctionData('unSubscribe', [0]) as any;
-  const userOp = await smartAccount.sendUserOperation({ uo: subscribeParams });
-  const hash = await smartAccount.waitForUserOperationTransaction({ hash: userOp.hash });
-  console.log(`Transaction hash: ${hash}`);
+  const smartAccount = await createModularAccountAlchemyClient({
+    apiKey: ALCHEMY_API_KEY!,
+    chain: polygonAmoy,
+    //@ts-ignore
+    signer: LocalAccountSigner.privateKeyToAccountSigner(PRIVATE_KEY),
+    salt: BigInt(accountSalt || 0),
+    gasManagerConfig: {
+      policyId: ACCOUNT_ABSTRATION_POLICY_ID!,
+    },
+  });
+  const client = new PluginClient(
+    polygonAmoy,
+    subscriptionPluginAddr,
+    abi,
+    //@ts-ignore
+    smartAccount,
+    provider
+  );
+  // const hash = await client.createProduct(
+  //   "YT Music Nigeria",
+  //   "A new music service with official albums, singles, videos, remixes, live performances and more for Android, iOS and desktop. It's all here.",
+  //   "https://music.youtube.com/img/on_platform_logo_dark.svg",
+  //   "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904",
+  //   "0xF65330dC75e32B20Be62f503a337cD1a072f898f",
+  //   amoyChainId
+  // );
+  // const hash = await client.createPlan(
+  //   2,
+  //   86400,
+  //   5,
+  //   linkDecimals - 1
+  // );
+  const hash = await client.createProductWithPlans(
+    'YT Nigeria',
+    'Share your videos with friends, family, and the world',
+    'https://t3.ftcdn.net/jpg/05/07/46/84/240_F_507468479_HfrpT7CIoYTBZSGRQi7RcWgo98wo3vb7.jpg',
+    linkAddr,
+    reciepient,
+    amoyChainId,
+    [
+      {
+        price: 1,
+        chargeInterval: 86400,
+      },
+    ],
+    linkDecimals - 1
+  );
+  console.log(hash);
 };
 main();
