@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
 import { ManifestFunction, ManifestAssociatedFunctionType, ManifestAssociatedFunction, PluginManifest, PluginMetadata, IPlugin } from "modular-account-libs/interfaces/IPlugin.sol";
+import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { ITokenBridge } from "./interfaces/ITokenBridge.sol";
 
 contract SubscriptionPlugin is BasePlugin {
@@ -12,7 +13,8 @@ contract SubscriptionPlugin is BasePlugin {
     string public constant VERSION = "1.0.0";
     string public constant AUTHOR = "Tee-py & Jaybee";
 
-    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
+    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_RUNTIME_VALIDATION = 0;
+    uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 1;
 
     enum ProductType {
         RECURRING,
@@ -349,23 +351,8 @@ contract SubscriptionPlugin is BasePlugin {
     // ┃  Author Plugin functions  ┃
     // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-    function changeSubscriptionPlan() public pure // uint256 productId,
-    // uint256 planId,
-    // uint256 subscriptionId
-    {
-        // UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
-        // Plan memory plan = plans[planId];
-        // if (subscription.provider != plan.provider) {
-        //     revert("Provider mismatch");
-        // }
-        // if (plan.productId != subscription.product) {
-        //     revert("Plan does not belong to current product");
-        // }
-        // subscription.plan = planId;
-        // subscription.isActive = true;
+    function changeSubscriptionPlan() public pure {
         revert("Not supported");
-        // subscription.isActive = true;
-        // emit SubscriptionPlanChanged(msg.sender, subscriptionId, planId);
     }
 
     function changeSubscriptionEndTime(uint256 subscriptionId, uint256 endTime) public {
@@ -442,15 +429,6 @@ contract SubscriptionPlugin is BasePlugin {
         ccipChainSelectors[_chainId] = _selector;
     }
 
-    function getUserSubscriptions(address subscriber) public view returns (UserSubscription[] memory subscriptions) {
-        uint256 nonce = subscriptionNonces[subscriber];
-        subscriptions = new UserSubscription[](nonce);
-        for (uint i = 0; i < subscriptionNonces[subscriber]; i++) {
-            subscriptions[i] = userSubscriptions[subscriber][i];
-        }
-        return subscriptions;
-    }
-
     // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
     // ┃    Plugin interface functions    ┃
     // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -466,7 +444,9 @@ contract SubscriptionPlugin is BasePlugin {
         PluginManifest memory manifest;
 
         // Specify plugin dependencies
-        manifest.dependencyInterfaceIds = new bytes4[](1);
+        manifest.dependencyInterfaceIds = new bytes4[](2);
+        manifest.dependencyInterfaceIds[_MANIFEST_DEPENDENCY_INDEX_OWNER_RUNTIME_VALIDATION] = type(IPlugin)
+            .interfaceId;
         manifest.dependencyInterfaceIds[_MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION] = type(IPlugin)
             .interfaceId;
 
@@ -564,5 +544,9 @@ contract SubscriptionPlugin is BasePlugin {
 
     function getManifestHash() public view returns (bytes32) {
         return keccak256(abi.encode(this.pluginManifest()));
+    }
+
+    function pack(address addr, uint8 functionId) public pure returns (FunctionReference) {
+        return FunctionReference.wrap(bytes21(bytes20(addr)) | bytes21(uint168(functionId)));
     }
 }

@@ -47,6 +47,7 @@ describe('Subscription Plugin Tests', function () {
       .connect(mscaOwner)
       .installPlugin(await subscriptionPlugin.getAddress(), await subscriptionPlugin.getManifestHash(), '0x', [
         packedVal,
+        packedVal,
       ]);
     await beneficiary.sendTransaction({
       to: await mscaAccount.getAddress(),

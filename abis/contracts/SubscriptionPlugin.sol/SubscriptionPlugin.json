@@ -682,62 +682,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "subscriber",
-        "type": "address"
-      }
-    ],
-    "name": "getUserSubscriptions",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "subscriptionId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "product",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "provider",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "plan",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "lastChargeDate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "endTime",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "isActive",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct SubscriptionPlugin.UserSubscription[]",
-        "name": "subscriptions",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "bytes",
         "name": "",
         "type": "bytes"
@@ -758,6 +702,30 @@
     ],
     "name": "onUninstall",
     "outputs": [],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "functionId",
+        "type": "uint8"
+      }
+    ],
+    "name": "pack",
+    "outputs": [
+      {
+        "internalType": "FunctionReference",
+        "name": "",
+        "type": "bytes21"
+      }
+    ],
     "stateMutability": "pure",
     "type": "function"
   },
