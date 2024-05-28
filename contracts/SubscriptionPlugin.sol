@@ -216,7 +216,7 @@ contract SubscriptionPlugin is BasePlugin {
         uint32 _chargeInterval,
         uint256 _price
     ) public productExists(_productId) productBelongsToCaller(_productId) {
-        require(_chargeInterval >= 24 hours && _chargeInterval <= 365 days, "invalid interval");
+        require(_chargeInterval >= 1 hours && _chargeInterval <= 365 days, "invalid interval");
         Product storage product = products[_productId];
         Plan memory plan = Plan({
             productId: _productId,
