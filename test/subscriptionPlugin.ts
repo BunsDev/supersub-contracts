@@ -391,7 +391,7 @@ describe('Subscription Plugin Tests', function () {
       expect(updatedPlan.isActive).to.equal(false);
       await expect(updateTxn).to.emit(subscriptionPlugin, 'PlanUpdated').withArgs(plan.planId, false);
     });
-    it('Create Product With Plan Tests', async () => {
+    it('EOA Create Product With Plan Tests', async () => {
       const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
       const [provider] = await hre.ethers.getSigners();
       const productName = hre.ethers.encodeBytes32String('Test product with plan');
@@ -460,7 +460,92 @@ describe('Subscription Plugin Tests', function () {
           .withArgs(product.productId, initPlan.id, initPlan.price, initPlan.chargeInterval, true);
       }
     });
-    it('Create Reccurring subscription test', async () => {
+    it('MSCA create product with plan tests', async () => {
+      const { subscriptionPlugin, token, beneficiary, mscaAccount, entrypoint, mscaOwner } = await loadFixture(setUp);
+      const productName = hre.ethers.encodeBytes32String('Test product with plan');
+      const description = 'basic description here';
+      const logo = 'http://p.img';
+      const planNonce = await subscriptionPlugin.planNonce();
+      const plans = [
+        {
+          price: BigInt(100) * BigInt(10) ** (await token.decimals()),
+          chargeInterval: 86400,
+          id: planNonce,
+        },
+        {
+          price: BigInt(200) * BigInt(10) ** (await token.decimals()),
+          chargeInterval: 90800,
+          id: planNonce + BigInt(1),
+        },
+      ];
+      const expectedProductId = await subscriptionPlugin.productNonce();
+      const expectedPlanNonce = (await subscriptionPlugin.planNonce()) + BigInt(plans.length);
+      const expectedProductNonce = expectedProductId + BigInt(1);
+      const callData = subscriptionPlugin.interface.encodeFunctionData('createProductWithPlans', [
+        productName,
+        description,
+        logo,
+        1,
+        await token.getAddress(),
+        beneficiary.address,
+        chainId,
+        plans,
+      ]);
+      const userOp = {
+        sender: await mscaAccount.getAddress(),
+        nonce: 0,
+        initCode: '0x',
+        callData,
+        callGasLimit: 700000,
+        verificationGasLimit: 1000000,
+        preVerificationGas: 0,
+        maxFeePerGas: 2,
+        maxPriorityFeePerGas: 1,
+        paymasterAndData: '0x',
+        signature: '0x',
+      };
+      const hash = await entrypoint.connect(mscaOwner).getUserOpHash(userOp);
+      const sig = await mscaOwner.signMessage(hre.ethers.getBytes(hash));
+      userOp.signature = sig;
+      const txn = await entrypoint.handleOps([userOp], beneficiary.address);
+      const product = await subscriptionPlugin.products(expectedProductId);
+      expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
+      expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
+      expect(product.productId).to.equal(expectedProductId);
+      expect(product.productType).to.equal(1);
+      expect(product.provider).to.equal(await mscaAccount.getAddress());
+      expect(product.chargeToken).to.equal(await token.getAddress());
+      expect(product.receivingAddress).to.equal(beneficiary.address);
+      expect(product.destinationChain).to.equal(chainId);
+      expect(product.isActive).to.equal(true);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'ProductCreated')
+        .withArgs(
+          product.productId,
+          await mscaAccount.getAddress(),
+          productName,
+          description,
+          logo,
+          1,
+          await token.getAddress(),
+          beneficiary.address,
+          chainId,
+          true
+        );
+      for (const initPlan of plans) {
+        const plan = await subscriptionPlugin.plans(initPlan.id);
+        expect(plan.productId).to.equal(product.productId);
+        expect(plan.provider).to.equal(product.provider);
+        expect(plan.chargeInterval).to.equal(initPlan.chargeInterval);
+        expect(plan.price).to.equal(initPlan.price);
+        expect(plan.isActive).to.equal(true);
+        expect(plan.planId).to.equal(initPlan.id);
+        await expect(txn)
+          .to.emit(subscriptionPlugin, 'PlanCreated')
+          .withArgs(product.productId, initPlan.id, initPlan.price, initPlan.chargeInterval, true);
+      }
+    });
+    it('EOA can create reccurring subscription test', async () => {
       const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
       const [provider] = await hre.ethers.getSigners();
       const productName = hre.ethers.encodeBytes32String('recurring subsciption');
@@ -518,9 +603,82 @@ describe('Subscription Plugin Tests', function () {
         .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
     });
   });
+  it('MSCA can create reccurring subscription test', async () => {
+    const { subscriptionPlugin, token, beneficiary, mscaAccount, mscaOwner, entrypoint } = await loadFixture(setUp);
+    const productName = hre.ethers.encodeBytes32String('recurring subsciption');
+    const description = 'basic description here';
+    const logo = 'http://p.img';
+    const chargeInterval = 86400;
+    const price = BigInt(200) * BigInt(10) ** (await token.decimals());
+    const callData = subscriptionPlugin.interface.encodeFunctionData('createRecurringSubscription', [
+      productName,
+      description,
+      logo,
+      await token.getAddress(),
+      beneficiary.address,
+      chainId,
+      chargeInterval,
+      price,
+    ]);
+    const expectedProductId = await subscriptionPlugin.productNonce();
+    const expectedPlanId = await subscriptionPlugin.planNonce();
+    const expectedPlanNonce = expectedPlanId + BigInt(1);
+    const expectedProductNonce = expectedProductId + BigInt(1);
+    const userOp = {
+      sender: await mscaAccount.getAddress(),
+      nonce: 0,
+      initCode: '0x',
+      callData,
+      callGasLimit: 700000,
+      verificationGasLimit: 1000000,
+      preVerificationGas: 0,
+      maxFeePerGas: 2,
+      maxPriorityFeePerGas: 1,
+      paymasterAndData: '0x',
+      signature: '0x',
+    };
+    const hash = await entrypoint.connect(mscaOwner).getUserOpHash(userOp);
+    const sig = await mscaOwner.signMessage(hre.ethers.getBytes(hash));
+    userOp.signature = sig;
+    const txn = await entrypoint.handleOps([userOp], beneficiary.address);
+    const product = await subscriptionPlugin.products(expectedProductId);
+    expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
+    expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
+    expect(product.productId).to.equal(expectedProductId);
+    expect(product.productType).to.equal(0);
+    expect(product.provider).to.equal(await mscaAccount.getAddress());
+    expect(product.chargeToken).to.equal(await token.getAddress());
+    expect(product.receivingAddress).to.equal(beneficiary.address);
+    expect(product.destinationChain).to.equal(chainId);
+    expect(product.isActive).to.equal(true);
+    await expect(txn)
+      .to.emit(subscriptionPlugin, 'ProductCreated')
+      .withArgs(
+        product.productId,
+        await mscaAccount.getAddress(),
+        productName,
+        description,
+        logo,
+        0,
+        await token.getAddress(),
+        beneficiary.address,
+        chainId,
+        true
+      );
+    const plan = await subscriptionPlugin.plans(expectedPlanId);
+    expect(plan.productId).to.equal(product.productId);
+    expect(plan.provider).to.equal(product.provider);
+    expect(plan.chargeInterval).to.equal(chargeInterval);
+    expect(plan.price).to.equal(price);
+    expect(plan.isActive).to.equal(true);
+    expect(plan.planId).to.equal(expectedPlanId);
+    await expect(txn)
+      .to.emit(subscriptionPlugin, 'PlanCreated')
+      .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
+  });
 
   describe('User Subscription', async () => {
-    it('User can subscribe, unsubscribe, and change subscription plan', async () => {
+    it('User can subscribe, unsubscribe, and change subscription endtime', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
 
       // Transfer tokens to the msca account
@@ -620,40 +778,31 @@ describe('Subscription Plugin Tests', function () {
         .withArgs(expectedSubscriber, expectedSubId);
 
       // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-      // ┃   Change Plan             ┃
+      // ┃   Change Endtime          ┃
       // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-      // create new plan
-      // await subscriptionPlugin
-      //   .connect(mscaOwner)
-      //   .createPlan(1, 300, BigInt(50) * BigInt(10) ** (await token.decimals()));
-      // change user sub
-      // const changeSubUserOp = {
-      //   sender: await mscaAccount.getAddress(),
-      //   nonce: 2,
-      //   initCode: '0x',
-      //   callData: getCallData(
-      //     'changeSubscriptionPlan(uint256,uint256,uint256)',
-      //     ['uint256', 'uint256', 'uint256'],
-      //     [1, 2, 0]
-      //   ),
-      //   callGasLimit: 7000000,
-      //   verificationGasLimit: 1000000,
-      //   preVerificationGas: 0,
-      //   maxFeePerGas: 2,
-      //   maxPriorityFeePerGas: 1,
-      //   paymasterAndData: '0x',
-      //   signature: '0x',
-      // };
-      // const changeSubUserOpHash = await entrypoint.getUserOpHash(changeSubUserOp);
-      // const changeSubSig = await mscaOwner.signMessage(hre.ethers.getBytes(changeSubUserOpHash));
-      // changeSubUserOp.signature = changeSubSig;
-      // const changeSubTxn = await entrypoint.handleOps([changeSubUserOp], beneficiary.address);
-      // const changedSub = await subscriptionPlugin.userSubscriptions(expectedSubscriber, 0);
-      // expect(changedSub.isActive).to.equal(true);
-      // expect(changedSub.plan).to.equal(2);
-      // await expect(changeSubTxn)
-      //   .to.emit(subscriptionPlugin, 'SubscriptionPlanChanged')
-      //   .withArgs(expectedSubscriber, 0, 2);
+      const endTime = 89677889;
+      const userOp = {
+        sender: await mscaAccount.getAddress(),
+        nonce: 2,
+        initCode: '0x',
+        callData: subscriptionPlugin.interface.encodeFunctionData('changeSubscriptionEndTime', [0, endTime]),
+        callGasLimit: 7000000,
+        verificationGasLimit: 1000000,
+        preVerificationGas: 0,
+        maxFeePerGas: 2,
+        maxPriorityFeePerGas: 1,
+        paymasterAndData: '0x',
+        signature: '0x',
+      };
+      const hash = await entrypoint.getUserOpHash(userOp);
+      const sig = await mscaOwner.signMessage(hre.ethers.getBytes(hash));
+      userOp.signature = sig;
+      const txn = await entrypoint.handleOps([userOp], beneficiary.address);
+      const changedSub = await subscriptionPlugin.userSubscriptions(expectedSubscriber, 0);
+      expect(changedSub.endTime).to.equal(endTime);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'SubscriptionEndTimeUpdated')
+        .withArgs(expectedSubscriber, 0, endTime);
     });
     it('Charge Failure Tests', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
