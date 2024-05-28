@@ -104,6 +104,7 @@ contract SubscriptionPlugin is BasePlugin {
         uint256 amount,
         uint256 timestamp
     );
+    event SubscriptionEndTimeUpdated(address indexed subscriber, uint256 indexed id, uint256 endTime);
 
     constructor(uint256 chainId, address _bridge) {
         admin = msg.sender;
@@ -347,10 +348,6 @@ contract SubscriptionPlugin is BasePlugin {
         emit UnSubscribed(msg.sender, subscriptionId);
     }
 
-    // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-    // ┃  Author Plugin functions  ┃
-    // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
     function changeSubscriptionPlan() public pure {
         revert("Not supported");
     }
@@ -358,7 +355,12 @@ contract SubscriptionPlugin is BasePlugin {
     function changeSubscriptionEndTime(uint256 subscriptionId, uint256 endTime) public {
         UserSubscription storage subscription = userSubscriptions[msg.sender][subscriptionId];
         subscription.endTime = endTime;
+        emit SubscriptionEndTimeUpdated(msg.sender, subscriptionId, endTime);
     }
+
+    // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    // ┃  Author Plugin functions  ┃
+    // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
     function _executeTransfer(
         uint256 amount,
@@ -452,7 +454,7 @@ contract SubscriptionPlugin is BasePlugin {
 
         // Specify execution function that can be called from the SCA
         // SCA can only call subscribe and unsubscribe functions
-        manifest.executionFunctions = new bytes4[](7);
+        manifest.executionFunctions = new bytes4[](10);
         manifest.executionFunctions[0] = this.subscribe.selector;
         manifest.executionFunctions[1] = this.unSubscribe.selector;
         manifest.executionFunctions[2] = this.changeSubscriptionPlan.selector;
@@ -460,6 +462,9 @@ contract SubscriptionPlugin is BasePlugin {
         manifest.executionFunctions[4] = this.createPlan.selector;
         manifest.executionFunctions[5] = this.updateProduct.selector;
         manifest.executionFunctions[6] = this.updatePlan.selector;
+        manifest.executionFunctions[7] = this.createProductWithPlans.selector;
+        manifest.executionFunctions[8] = this.createRecurringSubscription.selector;
+        manifest.executionFunctions[9] = this.changeSubscriptionEndTime.selector;
 
         // A dependency manifest function to validate user operations using the single owner dependency plugin
         ManifestFunction memory ownerUserOpValidationFunction = ManifestFunction({
@@ -470,7 +475,7 @@ contract SubscriptionPlugin is BasePlugin {
 
         // set the manifest function as validation function for calls to `subscribe`,
         // `unsubscribe`, `createPlan`, `createProduct`, `Updateplan` and `updateProduct` from the SCA.
-        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](7);
+        manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](10);
         manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
             executionSelector: this.subscribe.selector,
             associatedFunction: ownerUserOpValidationFunction
@@ -497,6 +502,18 @@ contract SubscriptionPlugin is BasePlugin {
         });
         manifest.userOpValidationFunctions[6] = ManifestAssociatedFunction({
             executionSelector: this.updatePlan.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[7] = ManifestAssociatedFunction({
+            executionSelector: this.createProductWithPlans.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[8] = ManifestAssociatedFunction({
+            executionSelector: this.createRecurringSubscription.selector,
+            associatedFunction: ownerUserOpValidationFunction
+        });
+        manifest.userOpValidationFunctions[9] = ManifestAssociatedFunction({
+            executionSelector: this.changeSubscriptionEndTime.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
 
