@@ -79,6 +79,13 @@ class PluginClient {
     });
   }
 
+  async execute(param: string) {
+    //@ts-ignore
+    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
+    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    return hash;
+  }
+
   async createProduct(
     name: string,
     description: string,
@@ -99,9 +106,8 @@ class PluginClient {
       reciepient,
       destinationChain,
     ]) as any;
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Create Product Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -115,9 +121,9 @@ class PluginClient {
       destinationChain,
       isActive,
     ]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+
+    const hash = await this.execute(param);
+    console.log(`Update Product Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -130,9 +136,8 @@ class PluginClient {
       chargeInterval,
       this.formatPrice(price, decimals),
     ]) as any;
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Create Plan Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -141,9 +146,8 @@ class PluginClient {
       await this.installPlugin();
     }
     const param = this.pluginContract.interface.encodeFunctionData('updatePlan', [planId, isActive]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Update Plan Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -172,9 +176,8 @@ class PluginClient {
         return { price: this.formatPrice(plan.price, decimals), chargeInterval: plan.chargeInterval };
       }),
     ]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Create Product With Plans Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -204,9 +207,8 @@ class PluginClient {
       endTime,
       this.formatPrice(price, decimals),
     ]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Recurring Payment Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -215,9 +217,8 @@ class PluginClient {
       await this.installPlugin();
     }
     const param = this.pluginContract.interface.encodeFunctionData('subscribe', [planId, endTime]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Subscribe Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -226,9 +227,8 @@ class PluginClient {
       await this.installPlugin();
     }
     const param = this.pluginContract.interface.encodeFunctionData('unSubscribe', [subId]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Unsubscribe Txn Hash: ${hash}`);
     return hash;
   }
 
@@ -237,45 +237,46 @@ class PluginClient {
       await this.installPlugin();
     }
     const param = this.pluginContract.interface.encodeFunctionData('changeSubscriptionEndTime', [subId, endTime]);
-    //@ts-ignore
-    const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
-    const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
+    const hash = await this.execute(param);
+    console.log(`Change subscription endtime Txn Hash: ${hash}`);
     return hash;
   }
 }
 
 const main = async () => {
-  // const subscriptionPluginAddr: Address = '0xc0d50057A3a174267Ed6a95E7b1E4A7C7Df3D390';
-  // const oldPluginAddr: Address = '0x92010Ac5622eDE0eD5AAe577A418A734A3B069a8';
-  // const PRIVATE_KEY = process.env.PRIVATE_KEY_1;
-  // const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
-  // const accountSalt = 13;
-  // const ACCOUNT_ABSTRATION_POLICY_ID = process.env.ACCOUNT_ABSTRATION_POLICY_ID;
-  // const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
-  // const amoyChainId = 80002;
-  // const usdcDecimals = 6;
-  // const linkDecimals = 18;
-  // const linkAddr = '0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904';
-  // const reciepient = '0xF65330dC75e32B20Be62f503a337cD1a072f898f';
-  // const smartAccount = await createModularAccountAlchemyClient({
-  //   apiKey: ALCHEMY_API_KEY!,
-  //   chain: polygonAmoy,
-  //   //@ts-ignore
-  //   signer: LocalAccountSigner.privateKeyToAccountSigner(PRIVATE_KEY),
-  //   salt: BigInt(accountSalt || 0),
-  //   gasManagerConfig: {
-  //     policyId: ACCOUNT_ABSTRATION_POLICY_ID!,
-  //   },
-  // });
-  // const client = new PluginClient(
-  //   polygonAmoy,
-  //   subscriptionPluginAddr,
-  //   abi,
-  //   //@ts-ignore
-  //   smartAccount,
-  //   provider
-  // );
-  // const hash = await client.createProductWithPlans(
+  const subscriptionPluginAddr: Address = '0x37604f45111AB488aeC38DBb17F90Ef1CC90cc32';
+  const oldPluginAddr: Address = '0xc0d50057A3a174267Ed6a95E7b1E4A7C7Df3D390';
+  const PRIVATE_KEY = process.env.PRIVATE_KEY_1;
+  const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+  const accountSalt = 13;
+  const ACCOUNT_ABSTRATION_POLICY_ID = process.env.ACCOUNT_ABSTRATION_POLICY_ID;
+  const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
+  const amoyChainId = 80002;
+  const usdcDecimals = 6;
+  const linkDecimals = 18;
+  const linkAddr = '0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904';
+  const reciepient = '0xF65330dC75e32B20Be62f503a337cD1a072f898f';
+  const smartAccount = await createModularAccountAlchemyClient({
+    apiKey: ALCHEMY_API_KEY!,
+    chain: polygonAmoy,
+    //@ts-ignore
+    signer: LocalAccountSigner.privateKeyToAccountSigner(PRIVATE_KEY),
+    salt: BigInt(accountSalt || 0),
+    gasManagerConfig: {
+      policyId: ACCOUNT_ABSTRATION_POLICY_ID!,
+    },
+  });
+  const client = new PluginClient(
+    polygonAmoy,
+    subscriptionPluginAddr,
+    abi,
+    //@ts-ignore
+    smartAccount,
+    provider
+  );
+  //await client.installPlugin();
+  // Product ID -> 1
+  // await client.createProductWithPlans(
   //   'YT Nigeria',
   //   'Share your videos with friends, family, and the world',
   //   'https://t3.ftcdn.net/jpg/05/07/46/84/240_F_507468479_HfrpT7CIoYTBZSGRQi7RcWgo98wo3vb7.jpg',
@@ -283,29 +284,30 @@ const main = async () => {
   //   reciepient,
   //   amoyChainId,
   //   [
-  //     {
+  //     {// PlanID --> 1
   //       price: 1,
   //       chargeInterval: 3600,
   //     },
-  //     {
+  //     {// PlanID --> 2
   //       price: 2,
   //       chargeInterval: 9000,
   //     }
   //   ],
   //   linkDecimals - 1
   // );
-  // const hash = await client.createRecurringPayment(
+  // await client.createRecurringPayment( // ProductID --> 2 & Subscription 0
   //   "Debt repayment",
   //   "Monthly debt repayment for eniola",
   //   "https://amoy.polygonscan.com/assets/poly/images/svg/logos/logo-dim.svg?v=24.5.4.0",
   //   linkAddr,
   //   2592000,
+  //   1725588639,
   //   reciepient,
   //   amoyChainId,
   //   5,
   //   linkDecimals - 1
   // );
-  // const hash = await client.createProduct(
+  // await client.createProduct( // Product ID --> 3
   //   "YT Music Nigeria",
   //   "A new music service with official albums, singles, videos, remixes, live performances and more for Android, iOS and desktop. It's all here.",
   //   "https://music.youtube.com/img/on_platform_logo_dark.svg",
@@ -313,23 +315,26 @@ const main = async () => {
   //   "0xF65330dC75e32B20Be62f503a337cD1a072f898f",
   //   amoyChainId
   // );
-  // const hash = await client.createPlan(
+  // await client.createPlan( // Plan ID --> 4
   //   3,
   //   3600,
   //   5,
   //   linkDecimals - 1
   // );
-  // const hash = await client.subscribe(
+  // await client.subscribe(
   //   1,
-  //   1725554989 // 100 days
+  //   1725554989
   // )
-  // const hash = await client.changeSubscriptionEndTime(
-  //   0,
+  // await client.changeSubscriptionEndTime(
+  //   1,
   //   0 // indefinite
   // )
-  // const hash = await client.unSubscribe(
-  //   1
+  // await client.subscribe(
+  //   4,
+  //   1725554989
+  // )
+  // await client.unSubscribe(
+  //   2
   // );
-  // console.log(hash);
 };
-// main();
+main();
