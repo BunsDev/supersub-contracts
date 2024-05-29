@@ -211,11 +211,11 @@ contract SubscriptionPlugin is BasePlugin {
         _createProduct(_name, _description, _logoUrl, _type, _chargeToken, _receivingAddress, _destinationChain);
     }
 
-    function createPlan(
+    function _createPlan(
         uint256 _productId,
         uint32 _chargeInterval,
         uint256 _price
-    ) public productExists(_productId) productBelongsToCaller(_productId) {
+    ) private productExists(_productId) productBelongsToCaller(_productId) returns (uint256) {
         require(_chargeInterval >= 1 hours && _chargeInterval <= 365 days, "invalid interval");
         Product storage product = products[_productId];
         Plan memory plan = Plan({
@@ -229,6 +229,15 @@ contract SubscriptionPlugin is BasePlugin {
         plans[plan.planId] = plan;
         planNonce += 1;
         emit PlanCreated(_productId, plan.planId, plan.price, plan.chargeInterval, plan.isActive);
+        return plan.planId;
+    }
+
+    function createPlan(
+        uint256 _productId,
+        uint32 _chargeInterval,
+        uint256 _price
+    ) public productExists(_productId) productBelongsToCaller(_productId) {
+        _createPlan(_productId, _chargeInterval, _price);
     }
 
     function createProductWithPlans(
@@ -256,7 +265,7 @@ contract SubscriptionPlugin is BasePlugin {
         }
     }
 
-    function createRecurringSubscription(
+    function createRecurringPayment(
         bytes32 _name,
         string calldata _description,
         string calldata _logoUrl,
@@ -264,6 +273,7 @@ contract SubscriptionPlugin is BasePlugin {
         address _receivingAddress,
         uint256 _destinationChain,
         uint32 _chargeInterval,
+        uint256 _endTime,
         uint256 _price
     ) public {
         uint256 productId = _createProduct(
@@ -275,7 +285,8 @@ contract SubscriptionPlugin is BasePlugin {
             _receivingAddress,
             _destinationChain
         );
-        createPlan(productId, _chargeInterval, _price);
+        uint256 planId = _createPlan(productId, _chargeInterval, _price);
+        subscribe(planId, _endTime);
     }
 
     function updateProduct(
@@ -463,7 +474,7 @@ contract SubscriptionPlugin is BasePlugin {
         manifest.executionFunctions[5] = this.updateProduct.selector;
         manifest.executionFunctions[6] = this.updatePlan.selector;
         manifest.executionFunctions[7] = this.createProductWithPlans.selector;
-        manifest.executionFunctions[8] = this.createRecurringSubscription.selector;
+        manifest.executionFunctions[8] = this.createRecurringPayment.selector;
         manifest.executionFunctions[9] = this.changeSubscriptionEndTime.selector;
 
         // A dependency manifest function to validate user operations using the single owner dependency plugin
@@ -509,7 +520,7 @@ contract SubscriptionPlugin is BasePlugin {
             associatedFunction: ownerUserOpValidationFunction
         });
         manifest.userOpValidationFunctions[8] = ManifestAssociatedFunction({
-            executionSelector: this.createRecurringSubscription.selector,
+            executionSelector: this.createRecurringPayment.selector,
             associatedFunction: ownerUserOpValidationFunction
         });
         manifest.userOpValidationFunctions[9] = ManifestAssociatedFunction({

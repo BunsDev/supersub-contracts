@@ -669,11 +669,16 @@
       },
       {
         "internalType": "uint256",
+        "name": "_endTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "_price",
         "type": "uint256"
       }
     ],
-    "name": "createRecurringSubscription",
+    "name": "createRecurringPayment",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
