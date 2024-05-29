@@ -184,6 +184,7 @@ class PluginClient {
     logoUrl: string,
     chargeToken: Address,
     chargeInterval: number,
+    endTime: number,
     reciepient: Address,
     destinationChain: number,
     price: number,
@@ -192,7 +193,7 @@ class PluginClient {
     if (!(await this.isPluginInstalled())) {
       await this.installPlugin();
     }
-    const param = this.pluginContract.interface.encodeFunctionData('createRecurringSubscription', [
+    const param = this.pluginContract.interface.encodeFunctionData('createRecurringPayment', [
       ethers.encodeBytes32String(name),
       description,
       logoUrl,
@@ -200,6 +201,7 @@ class PluginClient {
       reciepient,
       destinationChain,
       chargeInterval,
+      endTime,
       this.formatPrice(price, decimals),
     ]);
     //@ts-ignore

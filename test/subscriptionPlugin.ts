@@ -7,13 +7,6 @@ import { IEntryPoint } from '../typechain-types';
 describe('Subscription Plugin Tests', function () {
   const chainId = 1;
 
-  const getCallData = (funcSig: string, types: string[], values: any[]) => {
-    const abiCoder = hre.ethers.AbiCoder.defaultAbiCoder();
-    const encodeCall = abiCoder.encode(types, values);
-    const funcSelector = hre.ethers.id(funcSig).slice(0, 10);
-    return funcSelector + encodeCall.slice(2);
-  };
-
   async function setUp() {
     const EntryPointFactory = await hre.ethers.getContractFactory('EntryPoint');
     const TestTokenFactory = await hre.ethers.getContractFactory('TestToken');
@@ -203,22 +196,26 @@ describe('Subscription Plugin Tests', function () {
     });
     it('MSCA can create & Update product', async () => {
       const { mscaAccount, mscaOwner, subscriptionPlugin, entrypoint, token, beneficiary } = await loadFixture(setUp);
-      const funcSig = 'createProduct(bytes32,string,string,uint8,address,address,uint256)';
-      const types = ['bytes32', 'string', 'string', 'uint8', 'address', 'address', 'uint256'];
       const productName = hre.ethers.encodeBytes32String('Test Product');
       const productDesc = 'Test product';
       const logoUrl = 'http://product.img';
       const tokenAddr = await token.getAddress();
       const recvAddr = mscaOwner.address;
       const destChain = chainId;
-      const values = [productName, productDesc, logoUrl, 1, tokenAddr, recvAddr, destChain];
-      const callData = getCallData(funcSig, types, values);
 
       const userOp = {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: callData,
+        callData: subscriptionPlugin.interface.encodeFunctionData('createProduct', [
+          productName,
+          productDesc,
+          logoUrl,
+          1,
+          tokenAddr,
+          recvAddr,
+          destChain,
+        ]),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -268,11 +265,12 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 1,
         initCode: '0x',
-        callData: getCallData(
-          'updateProduct(uint256,address,uint256,bool)',
-          ['uint256', 'address', 'uint256', 'bool'],
-          [expectedProductId, beneficiary.address, 10, false]
-        ),
+        callData: subscriptionPlugin.interface.encodeFunctionData('updateProduct', [
+          expectedProductId,
+          beneficiary.address,
+          10,
+          false,
+        ]),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -302,19 +300,15 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData(
-          'createProduct(bytes32,string,string,uint8,address,address,uint256)',
-          ['bytes32', 'string', 'string', 'uint8', 'address', 'address', 'uint256'],
-          [
-            hre.ethers.encodeBytes32String('Test Product'),
-            'test product',
-            'http://product.img',
-            1,
-            await token.getAddress(),
-            mscaOwner.address,
-            chainId,
-          ]
-        ),
+        callData: subscriptionPlugin.interface.encodeFunctionData('createProduct', [
+          hre.ethers.encodeBytes32String('Test Product'),
+          'test product',
+          'http://product.img',
+          1,
+          await token.getAddress(),
+          mscaOwner.address,
+          chainId,
+        ]),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -335,11 +329,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 1,
         initCode: '0x',
-        callData: getCallData(
-          'createPlan(uint256,uint32,uint256)',
-          ['uint256', 'uint32', 'uint256'],
-          [1, chargeInterval, price]
-        ),
+        callData: subscriptionPlugin.interface.encodeFunctionData('createPlan', [1, chargeInterval, price]),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -374,7 +364,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 2,
         initCode: '0x',
-        callData: getCallData('updatePlan(uint256,bool)', ['uint256', 'bool'], [expectedPlanId, false]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('updatePlan', [expectedPlanId, false]),
         callGasLimit: 700000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -545,19 +535,17 @@ describe('Subscription Plugin Tests', function () {
           .withArgs(product.productId, initPlan.id, initPlan.price, initPlan.chargeInterval, true);
       }
     });
-    it('EOA can create reccurring subscription test', async () => {
-      const { subscriptionPlugin, token, beneficiary } = await loadFixture(setUp);
-      const [provider] = await hre.ethers.getSigners();
+    it('MSCA can create reccurring payment test', async () => {
+      const { subscriptionPlugin, token, beneficiary, mscaAccount, mscaOwner, entrypoint } = await loadFixture(setUp);
       const productName = hre.ethers.encodeBytes32String('recurring subsciption');
       const description = 'basic description here';
       const logo = 'http://p.img';
       const chargeInterval = 86400;
       const price = BigInt(200) * BigInt(10) ** (await token.decimals());
-      const expectedProductId = await subscriptionPlugin.productNonce();
-      const expectedPlanId = await subscriptionPlugin.planNonce();
-      const expectedPlanNonce = expectedPlanId + BigInt(1);
-      const expectedProductNonce = expectedProductId + BigInt(1);
-      const txn = await subscriptionPlugin.createRecurringSubscription(
+      // Transfer tokens to msca account
+      await token.transfer(await mscaAccount.getAddress(), price);
+      const endTime = 900;
+      const callData = subscriptionPlugin.interface.encodeFunctionData('createRecurringPayment', [
         productName,
         description,
         logo,
@@ -565,14 +553,36 @@ describe('Subscription Plugin Tests', function () {
         beneficiary.address,
         chainId,
         chargeInterval,
-        price
-      );
+        endTime,
+        price,
+      ]);
+      const expectedProductId = await subscriptionPlugin.productNonce();
+      const expectedPlanId = await subscriptionPlugin.planNonce();
+      const expectedPlanNonce = expectedPlanId + BigInt(1);
+      const expectedProductNonce = expectedProductId + BigInt(1);
+      const userOp = {
+        sender: await mscaAccount.getAddress(),
+        nonce: 0,
+        initCode: '0x',
+        callData,
+        callGasLimit: 700000,
+        verificationGasLimit: 1000000,
+        preVerificationGas: 0,
+        maxFeePerGas: 2,
+        maxPriorityFeePerGas: 1,
+        paymasterAndData: '0x',
+        signature: '0x',
+      };
+      const hash = await entrypoint.connect(mscaOwner).getUserOpHash(userOp);
+      const sig = await mscaOwner.signMessage(hre.ethers.getBytes(hash));
+      userOp.signature = sig;
+      const txn = await entrypoint.handleOps([userOp], beneficiary.address);
       const product = await subscriptionPlugin.products(expectedProductId);
       expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
       expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
       expect(product.productId).to.equal(expectedProductId);
       expect(product.productType).to.equal(0);
-      expect(product.provider).to.equal(provider.address);
+      expect(product.provider).to.equal(await mscaAccount.getAddress());
       expect(product.chargeToken).to.equal(await token.getAddress());
       expect(product.receivingAddress).to.equal(beneficiary.address);
       expect(product.destinationChain).to.equal(chainId);
@@ -581,7 +591,7 @@ describe('Subscription Plugin Tests', function () {
         .to.emit(subscriptionPlugin, 'ProductCreated')
         .withArgs(
           product.productId,
-          beneficiary.address,
+          await mscaAccount.getAddress(),
           productName,
           description,
           logo,
@@ -598,83 +608,36 @@ describe('Subscription Plugin Tests', function () {
       expect(plan.price).to.equal(price);
       expect(plan.isActive).to.equal(true);
       expect(plan.planId).to.equal(expectedPlanId);
+      const subscription = await subscriptionPlugin.userSubscriptions(await mscaAccount.getAddress(), 0);
+      expect(subscription.product).to.equal(plan.productId);
+      expect(subscription.plan).to.equal(plan.planId);
+      expect(subscription.provider).to.equal(product.provider);
+      expect(subscription.endTime).to.equal(endTime);
+      expect(await subscriptionPlugin.subscribedToProduct(await mscaAccount.getAddress(), product.productId)).to.equal(
+        true
+      );
+      expect(await subscriptionPlugin.subscriptionNonces(await mscaAccount.getAddress())).to.equal(1);
       await expect(txn)
         .to.emit(subscriptionPlugin, 'PlanCreated')
         .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'PlanCreated')
+        .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'Subscribed')
+        .withArgs(await mscaAccount.getAddress(), plan.provider, plan.productId, plan.planId, 0, endTime);
+      await expect(txn)
+        .to.emit(subscriptionPlugin, 'SubscriptionCharged')
+        .withArgs(
+          await mscaAccount.getAddress(),
+          product.receivingAddress,
+          subscription.subscriptionId,
+          plan.planId,
+          product.productId,
+          plan.price,
+          subscription.lastChargeDate
+        );
     });
-  });
-  it('MSCA can create reccurring subscription test', async () => {
-    const { subscriptionPlugin, token, beneficiary, mscaAccount, mscaOwner, entrypoint } = await loadFixture(setUp);
-    const productName = hre.ethers.encodeBytes32String('recurring subsciption');
-    const description = 'basic description here';
-    const logo = 'http://p.img';
-    const chargeInterval = 86400;
-    const price = BigInt(200) * BigInt(10) ** (await token.decimals());
-    const callData = subscriptionPlugin.interface.encodeFunctionData('createRecurringSubscription', [
-      productName,
-      description,
-      logo,
-      await token.getAddress(),
-      beneficiary.address,
-      chainId,
-      chargeInterval,
-      price,
-    ]);
-    const expectedProductId = await subscriptionPlugin.productNonce();
-    const expectedPlanId = await subscriptionPlugin.planNonce();
-    const expectedPlanNonce = expectedPlanId + BigInt(1);
-    const expectedProductNonce = expectedProductId + BigInt(1);
-    const userOp = {
-      sender: await mscaAccount.getAddress(),
-      nonce: 0,
-      initCode: '0x',
-      callData,
-      callGasLimit: 700000,
-      verificationGasLimit: 1000000,
-      preVerificationGas: 0,
-      maxFeePerGas: 2,
-      maxPriorityFeePerGas: 1,
-      paymasterAndData: '0x',
-      signature: '0x',
-    };
-    const hash = await entrypoint.connect(mscaOwner).getUserOpHash(userOp);
-    const sig = await mscaOwner.signMessage(hre.ethers.getBytes(hash));
-    userOp.signature = sig;
-    const txn = await entrypoint.handleOps([userOp], beneficiary.address);
-    const product = await subscriptionPlugin.products(expectedProductId);
-    expect(await subscriptionPlugin.productNonce()).to.equal(expectedProductNonce);
-    expect(await subscriptionPlugin.planNonce()).to.equal(expectedPlanNonce);
-    expect(product.productId).to.equal(expectedProductId);
-    expect(product.productType).to.equal(0);
-    expect(product.provider).to.equal(await mscaAccount.getAddress());
-    expect(product.chargeToken).to.equal(await token.getAddress());
-    expect(product.receivingAddress).to.equal(beneficiary.address);
-    expect(product.destinationChain).to.equal(chainId);
-    expect(product.isActive).to.equal(true);
-    await expect(txn)
-      .to.emit(subscriptionPlugin, 'ProductCreated')
-      .withArgs(
-        product.productId,
-        await mscaAccount.getAddress(),
-        productName,
-        description,
-        logo,
-        0,
-        await token.getAddress(),
-        beneficiary.address,
-        chainId,
-        true
-      );
-    const plan = await subscriptionPlugin.plans(expectedPlanId);
-    expect(plan.productId).to.equal(product.productId);
-    expect(plan.provider).to.equal(product.provider);
-    expect(plan.chargeInterval).to.equal(chargeInterval);
-    expect(plan.price).to.equal(price);
-    expect(plan.isActive).to.equal(true);
-    expect(plan.planId).to.equal(expectedPlanId);
-    await expect(txn)
-      .to.emit(subscriptionPlugin, 'PlanCreated')
-      .withArgs(product.productId, expectedPlanId, price, chargeInterval, true);
   });
 
   describe('User Subscription', async () => {
@@ -710,7 +673,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('subscribe', [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -758,7 +721,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 1,
         initCode: '0x',
-        callData: getCallData('unSubscribe(uint256)', ['uint256'], [0]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('unSubscribe', [0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -848,7 +811,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('subscribe', [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -868,32 +831,12 @@ describe('Subscription Plugin Tests', function () {
       await expect(subscriptionPlugin.charge(await mscaAccount.getAddress(), 0)).to.revertedWith(
         'time Interval not met'
       );
-      // await time.increase(3600 * 2);
-      // Todo: Test product and plan not active
-      // await expect(
-      //   subscriptionPlugin.charge(
-      //     hre.ethers.toBeHex(1, 32),
-      //     signer.address,
-      //     hre.ethers.toBeHex(0, 32),
-      //     await mscaAccount.getAddress(),
-      //     hre.ethers.toBeHex(0, 32)
-      //   )
-      // ).to.revertedWith('Incorrect plan id');
-      // await expect(
-      //   subscriptionPlugin.charge(
-      //     hre.ethers.toBeHex(0, 32),
-      //     signer.address,
-      //     hre.ethers.toBeHex(1, 32),
-      //     await mscaAccount.getAddress(),
-      //     hre.ethers.toBeHex(0, 32)
-      //   )
-      // ).to.revertedWith('Plan does not belong to specified product');
       // Unsubscribe from plan
       const unSubscribeUserOp = {
         sender: await mscaAccount.getAddress(),
         nonce: 1,
         initCode: '0x',
-        callData: getCallData('unSubscribe(uint256)', ['uint256'], [0]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('unSubscribe', [0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -944,7 +887,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('subscribe', [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
@@ -977,34 +920,6 @@ describe('Subscription Plugin Tests', function () {
       await expect(chargeTxn)
         .to.emit(subscriptionPlugin, 'SubscriptionCharged')
         .withArgs(await mscaAccount.getAddress(), signer.address, 0, 1, 1, price, afterChargeUserSub.lastChargeDate);
-      // Change plan and test charge
-      // const changeSubUserOp = {
-      //   sender: await mscaAccount.getAddress(),
-      //   nonce: 1,
-      //   initCode: '0x',
-      //   callData: getCallData(
-      //     'changeSubscriptionPlan(uint256,uint256,uint256)',
-      //     ['uint256', 'uint256', 'uint256'],
-      //     [1, 2, 0]
-      //   ),
-      //   callGasLimit: 7000000,
-      //   verificationGasLimit: 1000000,
-      //   preVerificationGas: 0,
-      //   maxFeePerGas: 2,
-      //   maxPriorityFeePerGas: 1,
-      //   paymasterAndData: '0x',
-      //   signature: '0x',
-      // };
-      // const changeSubUserOpHash = await entrypoint.getUserOpHash(changeSubUserOp);
-      // const changeSubSig = await mscaOwner.signMessage(hre.ethers.getBytes(changeSubUserOpHash));
-      // changeSubUserOp.signature = changeSubSig;
-      // await entrypoint.handleOps([changeSubUserOp], beneficiary.address);
-      // await time.increase(3600 * 2);
-      // const chargeTxn2 = await subscriptionPlugin.charge(await mscaAccount.getAddress(), 0);
-      // const userSub2 = await subscriptionPlugin.userSubscriptions(await mscaAccount.getAddress(), 0);
-      // await expect(chargeTxn2)
-      //   .to.emit(subscriptionPlugin, 'SubscriptionCharged')
-      //   .withArgs(await mscaAccount.getAddress(), signer.address, 0, 2, 1, price2, userSub2.lastChargeDate);
     });
     it('CCIP charge test', async () => {
       const {
@@ -1054,7 +969,7 @@ describe('Subscription Plugin Tests', function () {
         sender: await mscaAccount.getAddress(),
         nonce: 0,
         initCode: '0x',
-        callData: getCallData('subscribe(uint256,uint256)', ['uint256', 'uint256'], [1, 0]),
+        callData: subscriptionPlugin.interface.encodeFunctionData('subscribe', [1, 0]),
         callGasLimit: 7000000,
         verificationGasLimit: 1000000,
         preVerificationGas: 0,
