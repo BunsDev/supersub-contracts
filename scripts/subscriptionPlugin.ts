@@ -1,10 +1,11 @@
 import { Address } from '@alchemy/aa-core';
-import { AlchemyProvider, Contract, Networkish } from 'ethers';
+import { AlchemyProvider, Contract, Networkish, Wallet } from 'ethers';
 import { AlchemySmartAccountClient, createModularAccountAlchemyClient } from '@alchemy/aa-alchemy';
 import { accountLoupeActions } from '@alchemy/aa-accounts';
 import { LocalAccountSigner, polygonAmoy } from '@alchemy/aa-core';
 import { abi } from '../artifacts/contracts/SubscriptionPlugin.sol/SubscriptionPlugin.json';
-import { SubscriptionPlugin } from '../typechain-types';
+import { abi as bridgeAbi } from '../artifacts/contracts/CCIP.sol/SubscriptionTokenBridge.json';
+import { SubscriptionPlugin, SubscriptionTokenBridge } from '../typechain-types';
 import { ethers } from 'ethers';
 import { config as envConfig } from 'dotenv';
 
@@ -17,20 +18,27 @@ interface Plan {
 
 class PluginClient {
   chain: Networkish;
+  signer: Wallet;
   pluginAddress: Address;
   pluginContract: SubscriptionPlugin;
+  bridgeContract: SubscriptionTokenBridge;
   smartAccountClient: AlchemySmartAccountClient;
 
   constructor(
     chain: Networkish,
     pluginAddr: Address,
     pluginAbi: ethers.Interface | ethers.InterfaceAbi,
+    bridgeAddr: Address,
+    bridgeAbi: ethers.Interface | ethers.InterfaceAbi,
     client: AlchemySmartAccountClient,
-    provider: AlchemyProvider
+    provider: AlchemyProvider,
+    signer: Wallet
   ) {
     this.chain = chain;
+    this.signer = signer;
     this.pluginAddress = pluginAddr;
     this.pluginContract = new Contract(pluginAddr, pluginAbi, provider) as unknown as SubscriptionPlugin;
+    this.bridgeContract = new Contract(bridgeAddr, bridgeAbi, provider) as unknown as SubscriptionTokenBridge;
     this.smartAccountClient = client;
   }
 
@@ -241,19 +249,43 @@ class PluginClient {
     console.log(`Change subscription endtime Txn Hash: ${hash}`);
     return hash;
   }
+
+  async bridgeAsset(chainSelector: bigint, reciepient: Address, token: Address, amount: number, decimals: number) {
+    const callData = this.bridgeContract.interface.encodeFunctionData('transferToken', [
+      chainSelector,
+      reciepient,
+      token,
+      this.formatPrice(amount, decimals),
+      0,
+      0,
+    ]);
+    const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+    const executeCallData = abiCoder.encode(
+      ['address', 'uint256', 'bytes'],
+      [await this.bridgeContract.getAddress(), 0, callData]
+    );
+    const selector = ethers.id('execute(address,uint256,bytes)');
+    const uoParam = selector + executeCallData;
+    await this.execute(executeCallData);
+    //console.log(uoParam);
+  }
 }
 
 const main = async () => {
   const subscriptionPluginAddr: Address = '0x37604f45111AB488aeC38DBb17F90Ef1CC90cc32';
   const oldPluginAddr: Address = '0xc0d50057A3a174267Ed6a95E7b1E4A7C7Df3D390';
+  const ccipBridgeAddr: Address = '0x28689f559337a8851b53ab5f3e0ddd39e5d145eb';
   const PRIVATE_KEY = process.env.PRIVATE_KEY_1;
   const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
   const accountSalt = 13;
   const ACCOUNT_ABSTRATION_POLICY_ID = process.env.ACCOUNT_ABSTRATION_POLICY_ID;
   const provider = new AlchemyProvider('matic-amoy', ALCHEMY_API_KEY);
+  const signer = new Wallet(PRIVATE_KEY!, provider);
   const amoyChainId = 80002;
+  const sepoliaChainId = 11155111;
   const usdcDecimals = 6;
   const linkDecimals = 18;
+  const usdcAddr = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582';
   const linkAddr = '0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904';
   const reciepient = '0xF65330dC75e32B20Be62f503a337cD1a072f898f';
   const smartAccount = await createModularAccountAlchemyClient({
@@ -270,9 +302,12 @@ const main = async () => {
     polygonAmoy,
     subscriptionPluginAddr,
     abi,
+    ccipBridgeAddr,
+    bridgeAbi,
     //@ts-ignore
     smartAccount,
-    provider
+    provider,
+    signer
   );
   //await client.installPlugin();
   // Product ID -> 1
@@ -336,5 +371,33 @@ const main = async () => {
   // await client.unSubscribe(
   //   2
   // );
+
+  // CCIP Bridge Test Txns
+  // await client.pluginContract.connect(client.signer).addChainSelector(sepoliaChainId, BigInt('16015286601757825753'));
+  //console.log(await client.pluginContract.ccipChainSelectors(sepoliaChainId))
+  // await client.createProductWithPlans(
+  //   'Spotify NGN',
+  //   'Spotify is a digital music service that gives you access to millions of songs.',
+  //   'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/168px-Spotify_logo_without_text.svg.png',
+  //   usdcAddr,
+  //   reciepient,
+  //   sepoliaChainId,
+  //   [
+  //     {// PLAN ID -> 5
+  //       price: 1,
+  //       chargeInterval: 3600,
+  //     },
+  //     {// PLAN ID -> 6
+  //       price: 2,
+  //       chargeInterval: 9000,
+  //     }
+  //   ],
+  //   usdcDecimals - 1
+  // );
+  //const plan = await client.pluginContract.plans(5);
+  // await client.subscribe(5, 0);
+  //console.log(await client.bridgeContract.allowedDestinationChains(BigInt('16015286601757825753')))
+  // const product = await client.pluginContract.products(plan.productId)
+  // console.log(plan.planId, plan.productId, plan.price, plan.provider, product.chargeToken, product.destinationChain);
 };
 main();
