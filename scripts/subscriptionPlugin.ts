@@ -1,5 +1,5 @@
-import { Address } from '@alchemy/aa-core';
-import { AlchemyProvider, Contract, Networkish, Wallet } from 'ethers';
+import { Address, BatchUserOperationCallData, UserOperationCallData } from '@alchemy/aa-core';
+import { AlchemyProvider, Contract, Interface, Networkish, Wallet, ZeroAddress } from 'ethers';
 import { AlchemySmartAccountClient, createModularAccountAlchemyClient } from '@alchemy/aa-alchemy';
 import { accountLoupeActions } from '@alchemy/aa-accounts';
 import { LocalAccountSigner, polygonAmoy } from '@alchemy/aa-core';
@@ -87,7 +87,7 @@ class PluginClient {
     });
   }
 
-  async execute(param: string) {
+  async execute(param: string | UserOperationCallData | BatchUserOperationCallData) {
     //@ts-ignore
     const userOp = await this.smartAccountClient.sendUserOperation({ uo: param });
     const hash = await this.smartAccountClient.waitForUserOperationTransaction({ hash: userOp.hash });
@@ -250,24 +250,46 @@ class PluginClient {
     return hash;
   }
 
-  async bridgeAsset(chainSelector: bigint, reciepient: Address, token: Address, amount: number, decimals: number) {
+  async sendToken(tokenAddr: string, recipient: string, value: bigint) {
+    var userOp: UserOperationCallData;
+    if (tokenAddr == ZeroAddress) {
+      userOp = {
+        target: recipient as `0x${string}`,
+        value: value,
+        data: '0x',
+      };
+    } else {
+      const erc20Abi = ['function transfer(address to, uint256 value) public returns (bool)'];
+
+      // Create an instance of the Interface
+      const callData = new Interface(erc20Abi).encodeFunctionData('transfer', [recipient, value]);
+      userOp = {
+        target: tokenAddr as `0x${string}`,
+        data: callData as `0x${string}`,
+      };
+    }
+    const hash = await this.execute(userOp);
+    console.log(`Change sendToken  Txn Hash: ${hash}`);
+    return hash;
+  }
+
+  async bridgeAsset(chainSelector: bigint, reciepient: string, token: string, value: number) {
     const callData = this.bridgeContract.interface.encodeFunctionData('transferToken', [
       chainSelector,
       reciepient,
       token,
-      this.formatPrice(amount, decimals),
+      value,
       0,
       0,
     ]);
-    const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-    const executeCallData = abiCoder.encode(
-      ['address', 'uint256', 'bytes'],
-      [await this.bridgeContract.getAddress(), 0, callData]
-    );
-    const selector = ethers.id('execute(address,uint256,bytes)');
-    const uoParam = selector + executeCallData;
-    await this.execute(executeCallData);
-    //console.log(uoParam);
+    const bridgeContractAddr = await this.bridgeContract.getAddress();
+    const userOp = {
+      target: bridgeContractAddr as `0x${string}`,
+      data: callData as `0x${string}`,
+    };
+    const hash = await this.execute(userOp);
+    console.log(`Change bridge Asset  Txn Hash: ${hash}`);
+    return hash;
   }
 }
 
