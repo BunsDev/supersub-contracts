@@ -312,6 +312,10 @@ const main = async () => {
   const signer = new Wallet(PRIVATE_KEY!, provider);
   const amoyChainId = 80002;
   const sepoliaChainId = 11155111;
+  const optimismSepoliaChainID = "69";
+  const optimismSepoliaChainSelector = "5224473277236331295";
+  const fujiChainId = "43113";
+  const fujiChainSelector = "14767482510784806043"
   const usdcDecimals = 6;
   const linkDecimals = 18;
   const usdcAddr = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582';
@@ -338,6 +342,9 @@ const main = async () => {
     provider,
     signer
   );
+  //console.log(await client.pluginContract.ccipChainSelectors(fujiChainId));
+  //await client.pluginContract.connect(signer).addChainSelector(BigInt(optimismSepoliaChainID), BigInt(optimismSepoliaChainSelector));
+  //await client.pluginContract.connect(signer).addChainSelector(BigInt(fujiChainId), BigInt(fujiChainSelector));
   //await client.installPlugin();
   // Product ID -> 1
   // await client.createProductWithPlans(
