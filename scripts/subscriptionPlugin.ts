@@ -274,6 +274,14 @@ class PluginClient {
   }
 
   async bridgeAsset(chainSelector: bigint, reciepient: string, token: string, value: number) {
+    const erc20Abi = ['function approve(address spender, uint256 value) public returns (bool)'];
+    const bridgeContractAddr = await this.bridgeContract.getAddress();
+    const approveCallData = new Interface(erc20Abi).encodeFunctionData('approve', [bridgeContractAddr, value]);
+    const approveUserOp = {
+      target: token as `0x${string}`,
+      data: approveCallData as `0x${string}`,
+    };
+
     const callData = this.bridgeContract.interface.encodeFunctionData('transferToken', [
       chainSelector,
       reciepient,
@@ -282,12 +290,11 @@ class PluginClient {
       0,
       0,
     ]);
-    const bridgeContractAddr = await this.bridgeContract.getAddress();
-    const userOp = {
+    const bridgeUserOp = {
       target: bridgeContractAddr as `0x${string}`,
       data: callData as `0x${string}`,
     };
-    const hash = await this.execute(userOp);
+    const hash = await this.execute([approveUserOp, bridgeUserOp]);
     console.log(`Change bridge Asset  Txn Hash: ${hash}`);
     return hash;
   }
