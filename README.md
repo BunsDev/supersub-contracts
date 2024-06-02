@@ -23,4 +23,13 @@ The plugin contract is currently deployed on Polygon amoy with some test transac
 | Subscribe | [0x004ea934e59d689187e41bb1852f551a9497699c2e08ca36ddad2e4825e19028](https://amoy.polygonscan.com/tx/0x004ea934e59d689187e41bb1852f551a9497699c2e08ca36ddad2e4825e19028) |
 | Unsubscribe | [0xbd118a64895040b80b27b1a348ef99a66f5a9f49332061b70284b75f5c57b836](https://amoy.polygonscan.com/tx/0xbd118a64895040b80b27b1a348ef99a66f5a9f49332061b70284b75f5c57b836) |
 
+### Supported Destination chains
+
+The plugin allows service providers to accept subscription on other chains using the chainlink CCIP bridge. Users can pay for subscription on polygon amoy or polygon POS and the plugin routes the tokens to the supported destination chains as specified by the service provider. Below are the list of supported destination chains for both polygon amoy and polygon POS.
+
+| Source Chain |                 Supported destination chains                 |
+| :----------: | :----------------------------------------------------------: |
+| Polygon Amoy | `Ethereum Sepolia`, `Avalanche Fuji`, and `Optimism Sepolia` |
+| Polygon POS  |                         Coming soon                          |
+
 <!-- 2. **Cross-Chain Bridge Contract**: Leveraging the Chainlink Cross-Chain Interoperability Protocol (CCIP), this contract facilitates secure asset transfers between different blockchain networks. It enables providers to accept subscriptions on multiple chains and also allows users send assets to multiple chains. -->

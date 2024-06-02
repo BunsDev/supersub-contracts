@@ -342,6 +342,11 @@ const main = async () => {
     provider,
     signer
   );
+  // await client.sendToken(
+  //   ZeroAddress,
+  //   '0x454082dcfa29f386ef348e13d636748a91567749',
+  //   client.formatPrice(1, 16)
+  // )
   //console.log(await client.pluginContract.ccipChainSelectors(fujiChainId));
   //await client.pluginContract.connect(signer).addChainSelector(BigInt(optimismSepoliaChainID), BigInt(optimismSepoliaChainSelector));
   //await client.pluginContract.connect(signer).addChainSelector(BigInt(fujiChainId), BigInt(fujiChainSelector));
