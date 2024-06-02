@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
+import '@okxweb3/hardhat-explorer-verify';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
@@ -27,6 +28,21 @@ const config: HardhatUserConfig = {
     format: 'json',
     clear: true,
   },
+  okxweb3explorer: process.env.OKLINK_API_KEY
+    ? {
+        apiKey: process.env.OKLINK_API_KEY,
+        customChains: [
+          {
+            network: 'polygonAmoy',
+            chainId: 80002,
+            urls: {
+              apiURL: 'https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/AMOY_TESTNET',
+              browserURL: 'https://www.oklink.com/amoy',
+            },
+          },
+        ],
+      }
+    : undefined,
   networks:
     process.env.ALCHEMY_API_KEY && process.env.PRIVATE_KEY
       ? {
@@ -52,7 +68,7 @@ const config: HardhatUserConfig = {
             network: 'polygonAmoy',
             chainId: 80002,
             urls: {
-              apiURL: 'https://api-testnet.polygonscan.com/api',
+              apiURL: 'https://api-amoy.polygonscan.com/api',
               browserURL: 'https://amoy.polygonscan.com/',
             },
           },
