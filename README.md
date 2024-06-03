@@ -32,4 +32,49 @@ The plugin allows service providers to accept subscription on other chains using
 | Polygon Amoy | `Ethereum Sepolia`, `Avalanche Fuji`, and `Optimism Sepolia` |
 | Polygon POS  |                         Coming soon                          |
 
-<!-- 2. **Cross-Chain Bridge Contract**: Leveraging the Chainlink Cross-Chain Interoperability Protocol (CCIP), this contract facilitates secure asset transfers between different blockchain networks. It enables providers to accept subscriptions on multiple chains and also allows users send assets to multiple chains. -->
+## Bridge Contract
+
+This contract leverages the Chainlink Cross-Chain Interoperability Protocol (CCIP), allowing secure asset transfers between different blockchain networks. It enables providers to accept subscriptions on multiple chains and also allows users send assets to multiple chains.
+
+### Deployment Addresses
+
+|  Blockchain  |                                                            Address                                                            |
+| :----------: | :---------------------------------------------------------------------------------------------------------------------------: |
+| Polygon Amoy | [0x28689f559337a8851b53ab5f3e0ddd39e5d145eb](https://amoy.polygonscan.com/address/0x28689f559337a8851b53ab5f3e0ddd39e5d145eb) |
+| Polygon POS  |                                                          Coming Soon                                                          |
+
+### Test transactions
+
+The plugin contract is currently deployed on Polygon amoy with some test transactions below:
+| Operation | Txn Hash |
+| :---: | :---: |
+| USDC Transfer (Polygon Amoy --> Sepolia) | [0xadb6e2558cabde7cac6550d8bd26cc726d59c116937234ba45b16154700bd4ee](https://amoy.polygonscan.com/tx/0x878c146f23d5f7a198e1161a94d3d18138a4c202888c0c9f64c8fb40662fb10d) |
+
+### Supported Destination chains
+
+The plugin allows service providers to accept subscription on other chains using the chainlink CCIP bridge. Users can pay for subscription on polygon amoy or polygon POS and the plugin routes the tokens to the supported destination chains as specified by the service provider. Below are the list of supported destination chains for both polygon amoy and polygon POS.
+
+| Source Chain |                        Supported destination chains                        |
+| :----------: | :------------------------------------------------------------------------: |
+| Polygon Amoy | `Ethereum Sepolia`, `Avalanche Fuji`, `BNB testnet` and `Optimism Sepolia` |
+| Polygon POS  |                                Coming soon                                 |
+
+## Development
+
+### Prerequisites
+
+- Node.js installed on your machine
+- Hardhat installation Link here
+
+### Installation
+
+- Clone the repository
+- cd pantra-contracts
+- Install dependencies: `npm install`
+
+### Testing
+
+Run Hardhat Tests:
+`npx hardhat test`
+
+Built with love ❤️ from 🇳🇬🚀.
